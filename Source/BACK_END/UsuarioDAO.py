@@ -1,5 +1,5 @@
 import sqlite3 as sql
-import Usuario
+from BACK_END.Usuario import Usuario
 import base64
 
 class UsuarioDAO:
@@ -20,12 +20,10 @@ class UsuarioDAO:
     def cursor(self):
         return self.__cursor
 
-    def inserir_dados(self, id: int, nome: str, email: str, senha: str, foto: str):
-        if id == '' or nome == '' or email == '' or senha == '' or foto == '':
-            return False
-        encoded = (base64.b64encode(senha.encode('ascii')))
-        senha = encoded.decode('ascii')
-        self.__cursor.execute(f'INSERT INTO usuario VALUES({id},"{nome}","{email}","{senha}","{foto}")')
+    def inserir_dados(self, novo_usuario: Usuario):
+        encoded = (base64.b64encode(novo_usuario.senha.encode('ascii')))
+        novo_usuario.senha = encoded.decode('ascii')
+        self.__cursor.execute(f'INSERT INTO usuario VALUES({novo_usuario.id},"{novo_usuario.nome}","{novo_usuario.email}","{novo_usuario.senha}","{novo_usuario.foto}")')
         self.__banco_conectado.commit()
 
     def ler_dados(self):
@@ -42,5 +40,5 @@ class UsuarioDAO:
             usuario = [dado for dado in usuario]
             decoded = base64.b64decode(usuario[3].encode('ascii'))
             usuario[3] = decoded.decode('ascii')
-            lista_usuarios.append(Usuario.Usuario(usuario[0], usuario[1], usuario[2], usuario[3], usuario[4]))
+            lista_usuarios.append(Usuario(usuario[0], usuario[1], usuario[2], usuario[3], usuario[4]))
         return lista_usuarios

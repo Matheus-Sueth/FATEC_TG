@@ -228,7 +228,7 @@ def informacoes3(arquivo):
 
 
 def generos(ids):
-    with open("generos.json", encoding='utf-8') as meu_json:
+    with open("BACK_END/generos.json", encoding='utf-8') as meu_json:
         genero = json.load(meu_json)
     juncao = ''
     for i in ids:

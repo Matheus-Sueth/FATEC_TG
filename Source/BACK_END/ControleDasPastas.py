@@ -1,11 +1,11 @@
 from os import listdir, walk
 from os.path import join, realpath
-import PastasDAO as ptdao
-import FilmeDAO as fldao
-import Filme as fl
+import BACK_END.PastasDAO as ptdao
+import BACK_END.FilmeDAO as fldao
+import BACK_END.Filme as fl
 from tkinter.messagebox import showinfo, showwarning, askquestion, showerror, askyesno
 from tkinter import filedialog
-import ControleDeUsuario as cdu
+import BACK_END.ControleDeUsuario as cdu
 
 def mostrar_mensagem(mensagem,tipo='info'):
     if tipo == 'info':

@@ -1,5 +1,5 @@
 import sqlite3 as sql
-from Pastas import Pasta
+from BACK_END.Pastas import Pasta
 
 class PastaDAO:
     def __init__(self,banco):

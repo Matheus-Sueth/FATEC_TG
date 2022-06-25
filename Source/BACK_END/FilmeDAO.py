@@ -1,5 +1,5 @@
 import sqlite3 as sql
-from Filme import Filme
+from BACK_END.Filme import Filme
 
 class FilmeDAO:
     def __init__(self,banco):
@@ -20,7 +20,7 @@ class FilmeDAO:
         return self.__cursor
 
     def inserir_dados(self, usuario_id, filme=Filme):
-        self.__cursor.execute(f'INSERT INTO filmes VALUES({filme.id},{usuario_id},"{filme.titulo}",{filme.ano},"{filme.nota}","{filme.genero}","{filme.extensao}","{filme.cam_filme}","{filme.cam_imagem}",{filme.assistido},"{filme.sinopse}")')
+        self.__cursor.execute(f"INSERT INTO filmes VALUES('{filme.id}',{usuario_id},'{filme.titulo}',{filme.ano},'{filme.nota}','{filme.genero}','{filme.extensao}','{filme.cam_filme}','{filme.cam_imagem}',{filme.assistido},'{filme.sinopse}')")
         self.__banco_conectado.commit()
 
     def ler_dados(self, usuario_id):
@@ -61,7 +61,7 @@ class FilmeDAO:
         return lista
 
     def alterar_like_dados(self, valor, id):
-        self.__cursor.execute(f'UPDATE filmes SET assistido = {valor} WHERE id = {id}')
+        self.__cursor.execute(f'UPDATE filmes SET qtd_assistido = {valor} WHERE id = {id}')
         self.__banco_conectado.commit()
 
     def procurar_filmes(self):

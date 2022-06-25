@@ -1,7 +1,7 @@
 from tkinter import *
 from os.path import exists
-import Pastas as pt
-import UsuarioDAO as usdao
+import BACK_END.Pastas as pt
+import BACK_END.UsuarioDAO as usdao
 from tkinter.messagebox import showwarning
 from pathlib import Path
 

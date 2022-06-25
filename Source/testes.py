@@ -2,21 +2,24 @@ from tkinter import *
 from tkinter.ttk import Combobox
 from PIL import ImageTk
 from PIL import Image
-from ControleDasPastas import *
-from Usuario import Usuario
-from PastasDAO import PastaDAO
+from BACK_END.ControleDasPastas import *
+from BACK_END.Usuario import Usuario
+from BACK_END.PastasDAO import PastaDAO
 from pathlib import Path
-from RecomendaFilme import *
+from BACK_END.RecomendaFilme import *
 import urllib.request
 import io
 import re
 from os.path import isfile
+from os import startfile
 
 def tamanho_janela(menu, win_width, win_height):
     screen_width = menu.winfo_screenwidth()
     screen_height = menu.winfo_screenheight()
     start_x = int((screen_width / 2) - (win_width / 2))
     start_y = int((screen_height / 2) - (win_height / 2))
+    menu.iconbitmap('Images/1.ico')
+    menu['bg'] = '#154f91'
     menu.geometry(f"{win_width}x{win_height}+{start_x}+{start_y}")
     menu.resizable(False, False)
     menu.update()
@@ -36,9 +39,7 @@ class Login:
     def __init__(self, root=None):
         self.root = root
         self.root.title('LOGIN')
-        self.root.iconbitmap('1.ico')
-        self.root['bg'] = '#154f91'
-        tamanho_janela(self.root, 700, 300)
+        tamanho_janela(self.root, 700, 330)
         self.frame = Frame(self.root, bg='#154f91')
         self.frame.pack()
 
@@ -49,8 +50,8 @@ class Login:
             text='EMAIL',
             bg='#154f91',
             fg='white',
-            #anchor=W,
-            #justify=LEFT,
+            anchor=W,
+            justify=LEFT,
             width=44,
             font=('Arial', 12)
         )
@@ -58,8 +59,8 @@ class Login:
         self.entrada_email = Entry(
             frame_email,
             text='SENHA',
-            bg='#1e99be',
-            fg='white',
+            #bg='#1e99be',
+            #fg='white',
             width=30,
             font=('Arial', 18),
             border=2,
@@ -75,16 +76,16 @@ class Login:
             text='SENHA',
             bg='#154f91',
             fg='white',
-            #anchor=W,
-            #justify=LEFT,
+            anchor=W,
+            justify=LEFT,
             font=('Arial', 12),
             width=44
         )
         label_senha.pack(side=TOP)
         self.entrada_senha = Entry(
             frame_senha,
-            bg='#1e99be',
-            fg='white',
+            #bg='#1e99be',
+            #fg='white',
             width=30,
             font=('Arial', 18),
             border=2,
@@ -176,7 +177,7 @@ class Cadastro:
     def __init__(self, master=None, app=None):
         self.master = master
         self.master.title('CADASTRO')
-        tamanho_janela(self.master, 800, 560)
+        tamanho_janela(self.master, 800, 630)
         self.app = app
         self.frame = Frame(self.master, bg='#154f91')
         frame_foto = Frame(self.frame, bg='#154f91')
@@ -186,10 +187,12 @@ class Cadastro:
         self.botao_2 = Button(
             frame_foto,
             text='SELECIONAR\nFOTO',
-            bg='#154f91',
+            bg='#006266',
             fg='white',
             font=('Arial', 22),
             border=5,
+            height=4,
+            width=15,
             relief=RIDGE,
             command=lambda: self.selecionar_arquivo((("jpeg files", "*.jpg"), ("gif files", "*.gif*"), ("png files", "*.png")),'Escolha sua foto de perfil'))
         self.botao_2.pack(padx=10)
@@ -197,28 +200,71 @@ class Cadastro:
         frame_nome = Frame(self.frame, bg='#154f91')
         frame_nome.pack(pady=20)
 
-        label_nome = Label(frame_nome, text='NOME', background='#154f91', fg='white', font=('Arial', 12))
+        label_nome = Label(
+            frame_nome,
+            text='NOME',
+            bg='#154f91',
+            anchor=W,
+            justify=LEFT,
+            fg='white',
+            font=('Arial', 12),
+            width=44)
         label_nome.pack(side=TOP)
-        self.entrada_nome = Entry(frame_nome, bg='#1e99be', fg='white', width=30, font=('Arial', 18), border=2,
-                             relief=GROOVE)
+        self.entrada_nome = Entry(
+            frame_nome,
+            #bg='#1e99be',
+            #fg='white',
+            width=30,
+            font=('Arial', 18),
+            border=2,
+            relief=GROOVE)
         self.entrada_nome.pack()
 
         frame_email = Frame(self.frame, bg='#154f91')
         frame_email.pack(pady=20)
 
-        label_email = Label(frame_email, text='EMAIL', background='#154f91', fg='white', font=('Arial', 12))
+        label_email = Label(
+            frame_email,
+            text='EMAIL',
+            bg='#154f91',
+            anchor=W,
+            justify=LEFT,
+            fg='white',
+            font=('Arial', 12),
+            width=44)
         label_email.pack(side=TOP)
-        self.entrada_email = Entry(frame_email, bg='#1e99be', fg='white', width=30, font=('Arial', 18), border=2,
-                              relief=GROOVE)
+        self.entrada_email = Entry(
+            frame_email,
+            #bg='#1e99be',
+            #fg='white',
+            width=30,
+            font=('Arial', 18),
+            border=2,
+            relief=GROOVE)
         self.entrada_email.pack()
 
         frame_senha = Frame(self.frame, bg='#154f91')
         frame_senha.pack(pady=20)
 
-        label_senha = Label(frame_senha, text='SENHA', bg='#154f91', fg='white', font=('Arial', 12))
+        label_senha = Label(
+            frame_senha,
+            text='SENHA',
+            bg='#154f91',
+            anchor=W,
+            justify=LEFT,
+            fg='white',
+            font=('Arial', 12),
+            width=44)
         label_senha.pack(side=TOP)
-        self.entrada_senha = Entry(frame_senha, bg='#1e99be', fg='white', width=30, font=('Arial', 18), border=2,
-                              relief=GROOVE,show='*')
+        self.entrada_senha = Entry(
+            frame_senha,
+            #bg='#1e99be',
+            #fg='white',
+            width=30,
+            font=('Arial', 18),
+            border=2,
+            relief=GROOVE,
+            show='*')
         self.entrada_senha.pack()
 
         frame_botao = Frame(self.frame, bg='#154f91')
@@ -246,9 +292,9 @@ class Cadastro:
         try:
             self.caminho_foto = caminho
             im = Image.open(self.caminho_foto)
-            im.thumbnail((180, 90))
+            im.thumbnail((150, 150))
             self.photoImg = ImageTk.PhotoImage(im)
-            self.botao_2.configure(image=self.photoImg, height=100, width=150)
+            self.botao_2.configure(image=self.photoImg, height=150, width=150)
             self.botao_2.update()
         except:
             mostrar_mensagem('Arquivo de imagem corrompido ou inválido', 'erro')
@@ -260,10 +306,9 @@ class Cadastro:
                 self.botao_2.focus_set()
                 return None
             else:
-                imagem_reserva = 'foto.png'
-                self.caminho_foto = Path(imagem_reserva).absolute()
+                self.caminho_foto = 'Images/foto.png'
                 im = Image.open(self.caminho_foto)
-                im.thumbnail((100, 100))
+                im.thumbnail((150, 150))
                 self.photoImg = ImageTk.PhotoImage(im)
                 self.botao_2.configure(text='', image=self.photoImg)
 
@@ -282,7 +327,8 @@ class Cadastro:
             email = self.entrada_email.get()
             senha = self.entrada_senha.get()
             indice = len(cdu.lista_usuarios)+1
-            banco_usuarios.inserir_dados(indice,nome.title(),email,senha,foto)
+            novo_usuario = Usuario(indice,nome.title(), email, senha, foto)
+            banco_usuarios.inserir_dados(novo_usuario)
             mostrar_mensagem('Usuário Criado\nAgora vamos procurar a pasta dos filmes e a pasta das imagens', 'info')
             caminho.caminho_filme, caminho.caminho_imagem = criar_pastas()
             banco_pastas.inserir_dados(len(lista_pastas)+1,indice,caminho)
@@ -307,15 +353,18 @@ class Inicio:
         self.usuario
         self.filmes = banco_filmes.ler_dados(usuario_id=self.usuario.id)
         self.master.title('MENU INICIAL')
-        self.master.iconbitmap('1.ico')
-        self.master['bg'] = '#154f91'
         tamanho_janela(self.master, 1125, 850)
         self.frame = Frame(self.master, bg='#154f91')
         self.frame.pack()
 
+        self.objeto = [[0,840],[24,420],[48,210],[96,105],[192,57],[384,28]]
+
         self.id = 0
-        self.end_barra = (len(self.filmes)//6)
-        self.barra = Scale(self.frame, from_=self.id, to=self.end_barra, width=20, sliderlength=150, length=850, command=self.vervalor)
+        self.end_barra = len(self.filmes) // 6 if len(self.filmes) % 6 != 0 else len(self.filmes) // 6 - 1
+        #self.end_barra = 24
+        self.sliderlength = [dado[1] for dado in self.objeto if self.end_barra <= dado[0]][0]
+        #self.sliderlength = 420
+        self.barra = Scale(self.frame, from_=self.id, to=self.end_barra, width=20, sliderlength=self.sliderlength, length=850, command=self.vervalor)
         self.barra.pack(side=RIGHT)
 
         frame_foto = Frame(self.frame, bg='#154f91')
@@ -328,7 +377,7 @@ class Inicio:
         self.foto_usuario = Button(
             frame_foto,
             image=self.photoImg,
-            bg='black',
+            bg='#006266',
             border=5,
             relief=RIDGE,
             height=100,
@@ -342,7 +391,7 @@ class Inicio:
             text=self.usuario.nome.title(),
             fg='white',
             font=('Arial', 16),
-            bg = 'gray',
+            bg = '#006266',
             width=10,
             wraplength=110
         )
@@ -370,20 +419,20 @@ class Inicio:
 
         entry = Entry(
             frame_pesquisa,
-            bg='#1e99be',
-            fg='white',
+            #bg='#863700',
+            #fg='white',
             width=40,
-            font=('Arial', 18),
+            font=('Arial', 20),
             border=2,
             relief=GROOVE
         )
         entry.pack(side=LEFT,fill="both", expand="yes")
-        im = Image.open(r'E:\Matheus\Arquivos\TG\app\Main\lupa.png')
+        im = Image.open(r'Images/lupa.png')
         im.thumbnail((30, 30))
         self.pesquisar = ImageTk.PhotoImage(im)
         bt = Button(frame_pesquisa, image=self.pesquisar, bg='#154f91')
         bt.pack(side=LEFT,fill="both", expand="yes")
-        im = Image.open(r'E:\Matheus\Arquivos\TG\app\Main\eng.png')
+        im = Image.open(r'Images/eng.png')
         im.thumbnail((30, 30))
         self.ico = ImageTk.PhotoImage(im)
         filtro = Button(frame_pesquisa, image=self.ico, bg='#154f91')
@@ -403,14 +452,14 @@ class Inicio:
                 im.thumbnail((150, 150))
                 self.photoFilme.append(ImageTk.PhotoImage(im))
             except:
-                im = 'naoEncontrado.png'
+                im = 'Images/naoEncontrado.png'
                 im = Image.open(rf'{Path(im).absolute()}')
                 im.thumbnail((150, 150))
                 self.photoFilme.append(ImageTk.PhotoImage(im))
 
         for numero in range(6):
             try:
-                self.nomes_filmes.append([self.filmes[numero].titulo, self.filmes[numero].ano])
+                self.nomes_filmes.append([self.filmes[numero].titulo, self.filmes[numero]])
             except:
                 self.nomes_filmes.append(['Filme Não Encontrado', ''])
 
@@ -427,7 +476,7 @@ class Inicio:
             foto_filme = Button(
                 self.frame_foto,
                 image=self.photoFilme[numero],
-                bg='black',
+                bg='#006266',
                 border=5,
                 relief=RIDGE,
                 height=150,
@@ -441,7 +490,7 @@ class Inicio:
                 text=self.nomes_filmes[numero][0],
                 fg='white',
                 font=('Arial', 10),
-                bg='gray',
+                bg='#006266',
                 height=3,
                 width=21,
                 wraplength=170
@@ -454,8 +503,13 @@ class Inicio:
         for filme in self.filmes:
             print(filme)
 
-    def ver_filme(self,numero):
-        print(numero)
+    def ver_filme(self,filme):
+        if filme[0] == 'Filme Não Encontrado':
+            mostrar_mensagem('Não foi encontrado um filme\nSe deseja visulizar um filme, você deve adicionar um filme','aviso')
+        else:
+            self.frame.pack_forget()
+            self.page_4 = READ_Filme(master=self.master, app=self, filme=filme[1])
+            self.page_4.tela_read_filme()
 
     def recomendacao(self):
         print('Gerar recomendação de filme')
@@ -469,21 +523,22 @@ class Inicio:
         self.photoFilme.clear()
         self.nomes_filmes.clear()
         self.filmes = banco_filmes.ler_dados(usuario_id=self.usuario.id)
-        self.end_barra = (len(self.filmes) // 6)
-        self.barra.config(to=self.end_barra)
+        self.end_barra = len(self.filmes) // 6 if len(self.filmes) % 6 != 0 else len(self.filmes) // 6 - 1
+        self.sliderlength = [dado[1] for dado in self.objeto if self.end_barra <= dado[0]][0]
+        self.barra.config(to=self.end_barra, sliderlength=self.sliderlength)
         for numero in range(indice, indice+6):
             try:
                 im = Image.open(rf'{self.filmes[numero].cam_imagem}')
                 im.thumbnail((150, 150))
                 self.photoFilme.append(ImageTk.PhotoImage(im))
             except:
-                im = 'naoEncontrado.png'
+                im = 'Images/naoEncontrado.png'
                 im = Image.open(rf'{Path(im).absolute()}')
                 im.thumbnail((150, 150))
                 self.photoFilme.append(ImageTk.PhotoImage(im))
         for numero in range(indice, indice+6):
             try:
-                self.nomes_filmes.append([self.filmes[numero].titulo,self.filmes[numero].ano])
+                self.nomes_filmes.append([self.filmes[numero].titulo,self.filmes[numero]])
             except:
                 self.nomes_filmes.append(['Filme Não Encontrado',''])
         for numero in range(6):
@@ -572,13 +627,13 @@ class ADD_Filme:
         self.caminho_filme = ''
         self.caminho_foto = ''
         self.photoImg = ''
-        self.id_filme = float(f'-1.{len(self.lista)}')
+        self.id_filme = f'{self.usuario.id}.-1.{len(self.lista)}'
         self.filmes = []
         #slc = SELECIONAR
         self.botao_slc_imagem = Button(
             frame_imagem,
             text='SELECIONAR\nIMAGEM\nDO FILME',
-            bg='#154f91',
+            bg='#006266',
             fg='white',
             height=5,
             width=15,
@@ -591,17 +646,21 @@ class ADD_Filme:
         frame_sinopse = Frame(self.frame, bg='#154f91')
         frame_sinopse.pack(pady=15)
 
-        label_sinopse = Label(frame_sinopse,
-                              text='SINOPSE',
-                              background='#154f91',
-                              fg='white',
-                              font=('Arial', 12))
+        label_sinopse = Label(
+            frame_sinopse,
+            text='SINOPSE',
+            background='#154f91',
+            anchor=W,
+            justify=LEFT,
+            width=60,
+            fg='white',
+            font=('Arial', 12))
         label_sinopse.pack(side=TOP)
 
         self.entrada_sinopse = Text(
             frame_sinopse,
-            bg='#1e99be',
-            fg='white',
+            #bg='#1e99be',
+            #fg='white',
             wrap=WORD,
             width=60,
             height=3,
@@ -616,7 +675,7 @@ class ADD_Filme:
 
         self.botao_slc_arquivo = Button(frame_titulo,
                                         text='SELECIONAR\nARQUIVO\nDO FILME',
-                                        bg='#154f91',
+                                        bg='#006266',
                                         fg='white',
                                         height=4,
                                         width=38,
@@ -630,17 +689,21 @@ class ADD_Filme:
         frame_genero = Frame(self.frame, bg='#154f91')
         frame_genero.pack(pady=15)
 
-        label_genero = Label(frame_genero,
-                              text='GENÊRO',
-                              background='#154f91',
-                              fg='white',
-                              font=('Arial', 12))
+        label_genero = Label(
+            frame_genero,
+            text='GENÊRO',
+            background='#154f91',
+            anchor=W,
+            justify=LEFT,
+            width=60,
+            fg='white',
+            font=('Arial', 12))
         label_genero.pack(side=TOP)
 
         self.entrada_genero = Entry(
             frame_genero,
-            bg='#1e99be',
-            fg='white',
+            #bg='#1e99be',
+            #fg='white',
             width=45,
             font=('Arial', 16),
             border=2,
@@ -651,11 +714,15 @@ class ADD_Filme:
         frame_nota = Frame(self.frame, bg='#154f91')
         frame_nota.pack(pady=15)
 
-        label_nota = Label(frame_nota,
-                                  text='NOTA',
-                                  background='#154f91',
-                                  fg='white',
-                                  font=('Arial', 12))
+        label_nota = Label(
+            frame_nota,
+            text='NOTA',
+            background='#154f91',
+            anchor=W,
+            justify=LEFT,
+            width=60,
+            fg='white',
+            font=('Arial', 12))
         label_nota.pack(side=TOP)
 
         self.combobox_slc_nota = Combobox(frame_nota,
@@ -738,6 +805,10 @@ class ADD_Filme:
             mostrar_mensagem('Para adicionar um filme, você deve selecionar um arquivo')
             return ''
         genero = ''.join(char.replace(char, '/') if not char.isalnum() and not '/' == char else char for char in self.entrada_genero.get())
+        if 'Ficção/Científica' in genero:
+            genero = genero.replace('Ficção/Científica','Ficção Científica')
+        if 'Cinema/TV' in genero:
+            genero = genero.replace('Cinema/TV','Cinema TV')
         if genero == '':
             self.entrada_genero.focus_set()
             mostrar_mensagem('Para adicionar um filme, você deve adicionar texto ao campo genêro')
@@ -756,8 +827,8 @@ class ADD_Filme:
 
         for valor in valores:
             if valor.titulo == titulo and valor.ano == ano:
-                mostrar_mensagem(f'{titulo} JÁ ESTÁ CADASTRADO','alerta')
-                break
+                mostrar_mensagem(f'{titulo} JÁ ESTÁ CADASTRADO','aviso')
+                return ''
 
         arquivos = ['png', 'jpg', 'jfif', 'jpeg']
         arquivo_encontrado = False
@@ -775,6 +846,10 @@ class ADD_Filme:
                     resposta2 = perguntar("AVISO", f"Deseja utilizar a imagem existente no caminho ({existe_arquivo})?")
                     if resposta2:
                         imagem = existe_arquivo
+                        aux = Image.open(existe_arquivo)
+                        aux.thumbnail((150, 150))
+                        self.photoImg = ImageTk.PhotoImage(aux)
+                        self.botao_slc_imagem.config(image=self.photoImg, height=150, width=150)
                     else:
                         mostrar_mensagem('Então o filme não será adicionado','aviso')
                         return ''
@@ -815,7 +890,7 @@ class ADD_Filme:
             auxiliar_imagem = re.split(r"[/.]\s*", imagem)
             if auxiliar_filme != auxiliar_imagem[-2]:
                 mostrar_mensagem(f'O arquivo do filme e o arquivo da imagem estão com titulo ou ano diferentes\n \
-                                 Para prosseguir você arrumar os arquivos\nArquivo do filme = {auxiliar_filme}\nArquivo da imagem = {auxiliar_imagem}','erro')
+                                 Para prosseguir você tem que arrumar os arquivos\nArquivo do filme = {auxiliar_filme}\nArquivo da imagem = {auxiliar_imagem}','erro')
         if filme == '':
             arquivo = self.caminho_filme.split('/')
             lista = informacoes3(arquivo[-1])
@@ -832,7 +907,7 @@ class ADD_Filme:
             genero = genero.title()
 
         aux = fl.Filme(
-            id=id,
+            id=f'{self.usuario.id}.{id}',
             titulo=titulo,
             ano=ano,
             nota=nota,
@@ -844,7 +919,7 @@ class ADD_Filme:
         banco_filmes.inserir_dados(self.usuario.id, aux)
         mostrar_mensagem('Filme adicionado com sucesso')
         self.limpar_informacoes()
-        self.id_filme = float(f'-1.{len(banco_filmes.ler_dados(usuario_id=self.usuario.id))}')
+        self.id_filme = f'{self.usuario.id}.-1.{len(banco_filmes.ler_dados(usuario_id=self.usuario.id))}'
 
     def procurar_informacao(self):
         filme = self.caminho_filme
@@ -852,8 +927,8 @@ class ADD_Filme:
             mostrar_mensagem('Para procurar e adicionar as informações de um filme, você deve selecionar um filme')
             return ''
         arquivo = self.caminho_filme.split('/')
-        self.page_4_auxiliar = Add_Auxiliar(master=self.master, app=self, arquivo=arquivo[-1])
         self.frame.pack_forget()
+        self.page_4_auxiliar = Add_Auxiliar(master=self.master, app=self, arquivo=arquivo[-1])
         self.page_4_auxiliar.tela_auxiliar()
 
     def selecionar_arquivo(self, tipo_arquivo, title):
@@ -937,10 +1012,7 @@ class Add_Auxiliar:
         self.master = master
         self.app = app
         self.master.title('MENU INICIAL')
-        self.master.iconbitmap('1.ico')
-        self.master['bg'] = '#154f91'
         tamanho_janela(self.master, 1000, 900)
-        self.master.resizable(False, False)
         self.frame = Frame(self.master, bg='#154f91')
         self.frame.pack()
         self.arquivo = arquivo
@@ -965,7 +1037,7 @@ class Add_Auxiliar:
         if self.lista[self.id][4] != 'None':
             self.img = WebImage(self.lista[self.id][4], largura=550, altura=300).get()
         else:
-            im = 'naoEncontrado.jpg'
+            im = 'Images/naoEncontrado.jpg'
             im = Image.open(rf'{Path(im).absolute()}')
             im.thumbnail((550, 300))
             self.img = ImageTk.PhotoImage(im)
@@ -975,7 +1047,7 @@ class Add_Auxiliar:
             image=self.img,
             bd=10,
             relief=RIDGE,
-            background='#154f91'
+            background='#006266'
         )
         self.imagem.pack()
 
@@ -984,7 +1056,7 @@ class Add_Auxiliar:
                              pady=20,
                              padx=20,
                              wraplength=600,
-                             background='#154f91',
+                             background='#006266',
                              fg='white',
                              font=('Arial', 11),
                              bd=2,
@@ -997,7 +1069,7 @@ class Add_Auxiliar:
         self.titulo_informacao = Label(
             frame_informacao,
             text=self.lista[self.id][0],
-            background='#228b22',
+            background='#006266',
             fg='white',
             height=2,
             width=60,
@@ -1008,7 +1080,7 @@ class Add_Auxiliar:
         self.genero_informacao = Label(
             frame_informacao,
             text=self.lista[self.id][1],
-            background='#228b22',
+            background='#006266',
             fg='white',
             height=2,
             width=60,
@@ -1021,7 +1093,7 @@ class Add_Auxiliar:
         self.ano_informacao = Label(
             frame_informacao,
             text=self.lista[self.id][2][:4],
-            background='#228b22',
+            background='#006266',
             fg='white',
             height=2,
             width=60,
@@ -1092,7 +1164,7 @@ class Add_Auxiliar:
             self.img = WebImage(self.lista[self.id][4], largura=550, altura=300).get()
             self.imagem.config(image=self.img)
         else:
-            im = 'naoEncontrado.jpg'
+            im = 'Images/naoEncontrado.jpg'
             im = Image.open(rf'{Path(im).absolute()}')
             im.thumbnail((550, 300))
             self.img = ImageTk.PhotoImage(im)
@@ -1110,6 +1182,165 @@ class Add_Auxiliar:
         tamanho_janela(self.master, 950, 820)
         self.frame.pack_forget()
         self.app.tela_add_filmes(filme_escolhido)
+
+class READ_Filme:
+    def __init__(self, master=None, app=None, filme=fl.Filme):
+        self.master = master
+        self.app = app
+        self.master.title('CONSULTAR FILME')
+        tamanho_janela(self.master, 1000, 900)
+        self.frame = Frame(self.master, bg='#154f91')
+        self.frame.pack()
+        self.filme = filme
+        self.id = 0
+        frame_imagem = Frame(self.frame)
+        frame_imagem.pack(side=TOP, pady=10)
+
+        frame_sinopse = Frame(self.frame)
+        frame_sinopse.pack(side=TOP, pady=10)
+
+        frame_informacao = Frame(self.frame, bg='#006266', bd=5, relief=SOLID)
+        frame_informacao.pack(side=TOP, pady=10)
+
+        frame_botao = Frame(self.frame, bg='#154f91')
+        frame_botao.pack(pady=20)
+        if isfile(self.filme.cam_imagem):
+            try:
+                im = Image.open(self.filme.cam_imagem)
+                im.thumbnail((550, 300))
+                self.img = ImageTk.PhotoImage(im)
+            except:
+                im = 'Images/naoEncontrado.jpg'
+                im = Image.open(rf'{Path(im).absolute()}')
+                im.thumbnail((550, 300))
+                self.img = ImageTk.PhotoImage(im)
+        else:
+            im = 'Images/naoEncontrado.jpg'
+            im = Image.open(rf'{Path(im).absolute()}')
+            im.thumbnail((550, 300))
+            self.img = ImageTk.PhotoImage(im)
+
+        self.imagem = Label(
+            frame_imagem,
+            image=self.img,
+            bd=10,
+            relief=RIDGE,
+            background='#006266'
+        )
+        self.imagem.pack()
+
+        self.sinopse = Label(frame_sinopse,
+                             text=self.filme.sinopse,
+                             pady=20,
+                             padx=20,
+                             wraplength=600,
+                             background='#006266',
+                             fg='white',
+                             font=('Arial', 11),
+                             bd=2,
+                             relief=SUNKEN,
+                             height=10,
+                             width=90
+                             )
+        self.sinopse.pack()
+
+        self.titulo_informacao = Label(
+            frame_informacao,
+            text=self.filme.titulo,
+            background='#006266',
+            fg='white',
+            height=2,
+            width=60,
+            font=('Arial', 14)
+        )
+        self.titulo_informacao.pack()
+
+        self.genero_informacao = Label(
+            frame_informacao,
+            text=self.filme.genero,
+            background='#006266',
+            fg='white',
+            height=2,
+            width=60,
+            font=('Arial', 14)
+        )
+        self.genero_informacao.pack(
+            side=BOTTOM
+        )
+
+        frame_informacao_auxiliar = Frame(frame_informacao, bg='#006266')
+        frame_informacao_auxiliar.pack(side=TOP)
+
+        self.ano_informacao = Label(
+            frame_informacao_auxiliar,
+            text=self.filme.ano,
+            background='#006266',
+            fg='white',
+            height=2,
+            width=29,
+            font=('Arial', 14)
+        )
+        self.ano_informacao.pack(
+            side=LEFT
+        )
+
+        self.nota_informacao = Label(
+            frame_informacao_auxiliar,
+            text=self.filme.nota,
+            background='#006266',
+            fg='white',
+            height=2,
+            width=29,
+            font=('Arial', 14)
+        )
+        self.nota_informacao.pack(
+            side=RIGHT
+        )
+
+        voltar_botao = Button(
+            frame_botao,
+            text='VOLTAR',
+            bg='#154f91',
+            fg='white',
+            height=3,
+            width=30,
+            font=('Arial', 10),
+            border=15,
+            command=self.ir_tela_inicio
+        ).pack(
+            side=LEFT,
+            padx=100
+        )
+
+        gerar_botao = Button(
+            frame_botao,
+            text='ASSISTIR',
+            bg='#154f91',
+            fg='white',
+            height=3,
+            width=30,
+            font=('Arial', 10),
+            border=15,
+            command=self.assistir_filme
+        ).pack(
+            side=LEFT,
+            padx=120
+        )
+
+    def assistir_filme(self):
+        self.filme.aumentar_assistido()
+        banco_filmes.alterar_like_dados(valor=self.filme.assistido, id=self.filme.id)
+        startfile(self.filme.cam_filme)
+        self.master.destroy()
+
+    def tela_read_filme(self):
+        self.frame.pack()
+
+    def ir_tela_inicio(self):
+        self.frame.pack_forget()
+        self.master.title('MENU INICIAL')
+        tamanho_janela(self.master, 1135, 850)
+        self.app.tela_inicio()
 
 if __name__ == '__main__':
     app = Login(root)
