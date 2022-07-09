@@ -1,5 +1,6 @@
 import sqlite3 as sql
 from BACK_END.Filme import Filme
+from BACK_END.Colecao import Colecao
 
 class FilmeDAO:
     def __init__(self,banco):
@@ -40,7 +41,7 @@ class FilmeDAO:
                 valor=dados[9],
                 sinopse=dados[10])
             lista.append(filme)
-        return lista
+        return Colecao(lista, 'Filmes')
 
     def ler_dados_ordenados(self):
         self.__cursor.execute('SELECT * FROM filmes ORDER BY titulo, ano')
@@ -58,10 +59,19 @@ class FilmeDAO:
                 valor=dados[9],
                 sinopse=dados[10])
             lista.append(filme)
-        return lista
+        return Colecao(lista,'Filmes')
 
     def alterar_like_dados(self, valor, id):
         self.__cursor.execute(f'UPDATE filmes SET qtd_assistido = {valor} WHERE id = {id}')
+        self.__banco_conectado.commit()
+
+    def alterar_dados(self, indice, filme=Filme, usuario_id=0):
+        self.__cursor.execute(f'UPDATE filmes SET titulo = "{filme.titulo}", ano = {filme.ano}, nota = "{filme.nota}", genero = "{filme.genero}", extensao = "{filme.extensao}", cam_filme = "{filme.cam_filme}", cam_imagem = "{filme.cam_imagem}", sinopse = "{filme.sinopse}" WHERE id = {indice} and usuario_id = {usuario_id}')
+        self.__banco_conectado.commit()
+
+    def deletar_dados(self, indice):
+        self.__cursor.execute(
+            f'DELETE FROM filmes WHERE id="{indice}"')
         self.__banco_conectado.commit()
 
     def procurar_filmes(self):

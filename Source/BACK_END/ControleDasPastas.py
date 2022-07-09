@@ -45,14 +45,12 @@ def listar_caminho_arquivo(caminho_filme, filme):
                 return join(realpath(diretorio), arquivo)
     return 'erro'
 
-
 def verificar_arquivos(caminho):
     aux_lista = []
     for diretorio, subpastas, arquivos in walk(caminho):
         for arquivo in arquivos:
             aux_lista.append(arquivo)
     return aux_lista
-
 
 def formata_string(texto):
     aux = set()
@@ -62,7 +60,6 @@ def formata_string(texto):
         except:
             break
     return max(aux)
-
 
 def escolher_diretorio(title):
     diretorio = filedialog.askdirectory(
@@ -76,7 +73,6 @@ def escolher_diretorio(title):
         mostrar_mensagem('Diretório Escolhido')
 
     return diretorio
-
 
 def auxilar_filme():
     diretorio = filedialog.askdirectory(
@@ -93,7 +89,6 @@ def auxilar_filme():
         )
 
     return diretorio
-
 
 def auxilar_imagem():
     diretorio = filedialog.askdirectory(
@@ -152,7 +147,6 @@ def verifica_caminho_filmes(caminho):
             exit()
 
 root = cdu.root
-
 caminho = cdu.pastas
 banco_pastas = ptdao.PastaDAO(caminho.caminho_banco)
 if not banco_pastas.conferir_banco():

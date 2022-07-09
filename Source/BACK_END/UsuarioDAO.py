@@ -1,5 +1,6 @@
 import sqlite3 as sql
 from BACK_END.Usuario import Usuario
+from BACK_END.Colecao import Colecao
 import base64
 
 class UsuarioDAO:
@@ -41,4 +42,9 @@ class UsuarioDAO:
             decoded = base64.b64decode(usuario[3].encode('ascii'))
             usuario[3] = decoded.decode('ascii')
             lista_usuarios.append(Usuario(usuario[0], usuario[1], usuario[2], usuario[3], usuario[4]))
-        return lista_usuarios
+        return Colecao(lista_usuarios,'Usuários')
+
+    def deletar_dados(self, indice):
+        self.__cursor.execute(
+            f'DELETE FROM usuario WHERE id={indice}')
+        self.__banco_conectado.commit()

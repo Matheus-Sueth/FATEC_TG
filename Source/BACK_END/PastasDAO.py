@@ -1,5 +1,6 @@
 import sqlite3 as sql
 from BACK_END.Pastas import Pasta
+from BACK_END.Colecao import Colecao
 
 class PastaDAO:
     def __init__(self,banco):
@@ -31,7 +32,12 @@ class PastaDAO:
         for dado in result:
             pasta = Pasta(dado[2],dado[3],dado[4])
             pastas.append((dado[0],dado[1],pasta))
-        return pastas
+        return Colecao(pastas, 'Pastas')
+
+    def deletar_dados(self, indice):
+        self.__cursor.execute(
+            f'DELETE FROM pastas WHERE id={indice}')
+        self.__banco_conectado.commit()
 
     def conferir_banco(self):
         colunas = ['id','nome','email','senha','foto']

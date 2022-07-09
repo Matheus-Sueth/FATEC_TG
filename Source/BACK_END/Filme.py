@@ -2,15 +2,21 @@ class Filme:
     def __init__(self, id, titulo: str, ano: int, nota: str, genero: str,
                  extensao: str, cam_filme: str, cam_imagem: str, sinopse: str, valor:int=0):
         self.__id = id #vai ser o id na API TMDB, se não encontrar vai ser -1.len(banco_filmes)
-        self.__titulo = titulo.title()
+        self.__titulo = titulo
         self.__ano = ano
         self.__nota = nota
-        self.__genero = genero.title()
+        self.__genero = genero
         self.__extensao = extensao
         self.__cam_filme = cam_filme
         self.__cam_imagem = cam_imagem
         self.__qtd_assistido = valor
-        self.__sinopse = sinopse
+        self.__sinopse = sinopse.capitalize()
+
+    def __str__(self):
+        return f'Titulo = {self.__titulo} - Ano = {self.__ano}'
+
+    def __eq__(self, other):
+        return (self.__titulo == other.titulo) and (self.__ano == other.ano)
 
     @property
     def id(self):

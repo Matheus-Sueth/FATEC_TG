@@ -6,6 +6,17 @@ class Usuario:
         self.__senha = senha
         self.__foto = foto
 
+    def __str__(self):
+        return f'Olá, {self.__nome}'
+
+    def __eq__(self, other):
+        if (self.__email == other.email) and (self.__senha == other.senha):
+            return True
+        elif (self.__email == other.email) and (self.__senha != other.senha):
+            return False
+        else:
+            return None
+
     @property
     def id(self):
         return self.__id
@@ -41,7 +52,3 @@ class Usuario:
     @foto.setter
     def foto(self, outra_foto):
         self.__foto = outra_foto
-
-if __name__ == '__main__':
-    a = Usuario(1,'1','1','1','1')
-    print(a.foto)

@@ -29,7 +29,7 @@ def atualiza_banco(banco_usuarios):
         )
         exit()
     elif auxiliar == True:
-        mensagem = f'Tabela usuarios possui campos vazios\nPor favor arrume'
+        mensagem = f'Tabela usuarios possui campos vazios\nContate o desenvolvedor no número (11) 96985-8000'
         showwarning(
             title='ATENÇÃO',
             message=mensagem
@@ -37,7 +37,6 @@ def atualiza_banco(banco_usuarios):
         exit()
     else:
         return auxiliar
-
 
 if exists(pastas.caminho_banco):
     pastas.caminho_banco = Path('banco.db').absolute()

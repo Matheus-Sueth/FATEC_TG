@@ -4,6 +4,9 @@ class Pasta:
         self.__caminho_imagem = imagem
         self.__caminho_banco = banco
 
+    def __str__(self):
+        return f'Diretório dos filmes = {self.__caminho_filme}\nDiretório das imagens = {self.__caminho_imagem}\nDiretório do banco = {self.__caminho_banco}'
+
     @property
     def caminho_filme(self):
         return self.__caminho_filme
