@@ -12,6 +12,7 @@ import io
 import re
 from os.path import isfile
 from os import startfile
+from random import randint
 
 def tamanho_janela(menu, win_width, win_height):
     screen_width = menu.winfo_screenwidth()
@@ -406,7 +407,7 @@ class Cadastro:
                 im = Image.open(self.caminho_foto)
                 im.thumbnail((150, 150))
                 self.photoImg = ImageTk.PhotoImage(im)
-                self.botao_2.configure(text='', image=self.photoImg)
+                self.botao_2.configure(text='', image=self.photoImg, height=150, width=150)
 
         if self.entrada_nome.get() == '':
             mostrar_mensagem('Campo NOME não foi preenchido', 'aviso')
@@ -433,7 +434,7 @@ class Cadastro:
 
     def ir_tela_login(self):
         self.frame.pack_forget()
-        self.page_Login = Login(root=self.root)
+        self.page_Login = Login(master=self.master, app=self.app)
         self.page_Login.tela_login()
 
     def tela_cadastro(self):
@@ -618,7 +619,9 @@ class Inicio:
         print(self.titulo_filmes)
 
     def aleatorio(self):
-        print('Gerar filme aleatório')
+        self.frame.pack_forget()
+        self.page_Aleatorio_Filme = Aleatorio_Filme(master=self.master, app=self)
+        self.page_Aleatorio_Filme.tela_filme_aleatorio()
 
     def atualiza_filmes(self, indice=0):
         self.photoFilme.clear()
@@ -824,7 +827,7 @@ class ADD_Filme:
                                  command=self.adicionar_filmes)
         botao_add_filme.pack(padx=10, side=LEFT)
         botao_procurar_filmes = Button(frame_botoes,
-                                       text='PROCURAR FILMES\nE ADICIONAR',
+                                       text='PROCURAR\nFILMES NA PASTA',
                                        bg='#154f91',
                                        fg='white',
                                        height=3,
@@ -880,7 +883,7 @@ class ADD_Filme:
         extensao = aux_filme[-1].strip()
         valores = banco_filmes.ler_dados(usuario_id=self.usuario.id)
 
-        aux = fl.Filme('',titulo,ano,'','','','',0,'')
+        aux = fl.Filme('',titulo,ano,'','','','','','')
 
         for valor in valores:
             if valor == aux:
@@ -1064,7 +1067,34 @@ class ADD_Filme:
 
     def procurar_filmes(self):
         self.filmes = verificar_arquivos(self.pastas[2].caminho_filme)
-        print(len(self.filmes))
+        self.imagens = verificar_arquivos(self.pastas[2].caminho_imagem)
+        valores = banco_filmes.ler_dados(usuario_id=self.usuario.id)
+        for filme in self.filmes:
+            self.caminho_filme = filme
+            self.botao_slc_arquivo.config(text=filme)
+            aux_filme = re.split(r"[/()]\s*", filme)
+            titulo = aux_filme[-3].strip()
+            ano = int(aux_filme[-2])
+            extensao = aux_filme[-1].strip()
+            aux = fl.Filme('', titulo, ano, '', '', extensao, filme, '', '')
+
+            if aux in valores:
+                continue
+
+            for imagem in self.imagens:
+                aux_imagem = re.split(r"[/()]\s*", imagem)
+                if titulo.strip() == aux_imagem[-3].strip():
+                    self.caminho_foto = imagem
+                    aux_img = Image.open(self.caminho_foto)
+                    aux_img.thumbnail((150, 150))
+                    self.photoImg = ImageTk.PhotoImage(aux_img)
+                    self.botao_slc_imagem.config(image=self.photoImg, height=150, width=150)
+                    break
+            self.procurar_informacao()
+            mostrar_mensagem(f'Vamos adicionar agora o filme:\n{aux}')
+            return ''
+        else:
+            mostrar_mensagem('Todos os filmes foram adicionados','info')
 
 class ADD_Auxiliar:
     def __init__(self, master=None, app=None, lista=[]):
@@ -1502,7 +1532,6 @@ class READ_Filme:
             self.nota_informacao.config(text=novo_filme.nota)
             self.filme = novo_filme
         self.frame.pack()
-
 
     def ir_tela_inicio(self):
         self.frame.pack_forget()
@@ -2075,6 +2104,228 @@ class UPDATE_Auxiliar:
         tamanho_janela(self.master, 950, 820)
         self.frame.pack_forget()
         self.app.tela_add_filmes(filme_escolhido)
+
+class Aleatorio_Filme:
+    def __init__(self, master=None, app=None):
+        self.master = master
+        self.app = app
+        self.master.title('FILME ALEATÓRIO')
+        tamanho_janela(self.master, 1000, 900)
+        self.frame = Frame(self.master, bg='#154f91')
+        self.frame.pack()
+        self.filmes = self.app.filmes
+        self.salvar_numeros = []
+        self.id_filme = self.gerar_numero_aleatorio()
+        self.filme = self.filmes[self.id_filme]
+        self.id = 0
+        frame_imagem = Frame(self.frame)
+        frame_imagem.pack(side=TOP, pady=10)
+
+        frame_sinopse = Frame(self.frame)
+        frame_sinopse.pack(side=TOP, pady=10)
+
+        frame_informacao = Frame(self.frame, bg='#1A857F', bd=5, relief=SOLID)
+        frame_informacao.pack(side=TOP, pady=10)
+
+        self.frame_botao = Frame(self.frame, bg='#154f91')
+        self.frame_botao.pack(pady=20)
+        if isfile(self.filme.cam_imagem):
+            try:
+                im = Image.open(self.filme.cam_imagem)
+                im.thumbnail((550, 300))
+                self.img = ImageTk.PhotoImage(im)
+            except:
+                im = 'Images/naoEncontrado.jpg'
+                im = Image.open(rf'{Path(im).absolute()}')
+                im.thumbnail((550, 300))
+                self.img = ImageTk.PhotoImage(im)
+        else:
+            im = 'Images/naoEncontrado.jpg'
+            im = Image.open(rf'{Path(im).absolute()}')
+            im.thumbnail((550, 300))
+            self.img = ImageTk.PhotoImage(im)
+
+        self.imagem = Label(
+            frame_imagem,
+            image=self.img,
+            bd=10,
+            relief=RIDGE,
+            background='#334B49'
+        )
+        self.imagem.pack()
+
+        self.sinopse = Label(frame_sinopse,
+                             text=self.filme.sinopse,
+                             pady=20,
+                             padx=20,
+                             wraplength=600,
+                             bg='#1A857F',
+                             fg='white',
+                             font=('Arial', 11),
+                             bd=2,
+                             relief=SUNKEN,
+                             height=10,
+                             width=90
+                             )
+        self.sinopse.pack()
+
+        self.titulo_informacao = Label(
+            frame_informacao,
+            text=self.filme.titulo,
+            bg='#1A857F',
+            fg='white',
+            height=2,
+            width=60,
+            font=('Arial', 14)
+        )
+        self.titulo_informacao.pack()
+
+        self.genero_informacao = Label(
+            frame_informacao,
+            text=self.filme.genero,
+            bg='#1A857F',
+            fg='white',
+            height=2,
+            width=60,
+            font=('Arial', 14)
+        )
+        self.genero_informacao.pack(
+            side=BOTTOM
+        )
+
+        frame_informacao_auxiliar = Frame(frame_informacao, bg='#1A857F')
+        frame_informacao_auxiliar.pack(side=TOP)
+
+        self.ano_informacao = Label(
+            frame_informacao_auxiliar,
+            text=self.filme.ano,
+            bg='#1A857F',
+            fg='white',
+            height=2,
+            width=29,
+            font=('Arial', 14)
+        )
+        self.ano_informacao.pack(
+            side=LEFT
+        )
+
+        self.nota_informacao = Label(
+            frame_informacao_auxiliar,
+            text=self.filme.nota,
+            bg='#1A857F',
+            fg='white',
+            height=2,
+            width=29,
+            font=('Arial', 14)
+        )
+        self.nota_informacao.pack(
+            side=RIGHT
+        )
+
+        voltar_botao = Button(
+            self.frame_botao,
+            text='VOLTAR',
+            bg='#154f91',
+            fg='white',
+            height=3,
+            width=30,
+            font=('Arial', 10),
+            border=15,
+            command=self.ir_tela_inicio
+        ).pack(
+            side=LEFT,
+            padx=40
+        )
+
+        voltar_botao = Button(
+            self.frame_botao,
+            text='GERAR',
+            bg='#154f91',
+            fg='white',
+            height=3,
+            width=30,
+            font=('Arial', 10),
+            border=15,
+            command=self.gerar_filme
+        ).pack(
+            side=LEFT
+        )
+
+        self.botao_extra = Button(
+            self.frame_botao,
+            text='ASSISTIR',
+            bg='#154f91',
+            fg='white',
+            height=3,
+            width=30,
+            font=('Arial', 10),
+            border=15,
+            command=self.assistir_filme
+        )
+        self.botao_extra.pack(
+            side=LEFT,
+            padx=40
+        )
+
+    def gerar_numero_aleatorio(self):
+        for _ in range(len(self.filmes)):
+            numero = randint(0, len(self.filmes)-1)
+            if numero in self.salvar_numeros:
+                if len(self.salvar_numeros) == len(self.filmes):
+                    self.salvar_numeros.clear()
+                    mostrar_mensagem('Todos os filmes foram vistos, agora voltaremos para o primeiro filme','aviso')
+                    self.salvar_numeros.append(0)
+                    return 0
+                else:
+                    continue
+            else:
+                self.salvar_numeros.append(numero)
+                return numero
+
+    def gerar_filme(self):
+        self.id_filme = self.gerar_numero_aleatorio()
+        self.filme = self.filmes[self.id_filme]
+
+        if isfile(self.filme.cam_imagem):
+            try:
+                im = Image.open(self.filme.cam_imagem)
+                im.thumbnail((550, 300))
+                self.img = ImageTk.PhotoImage(im)
+            except:
+                im = 'Images/naoEncontrado.jpg'
+                im = Image.open(rf'{Path(im).absolute()}')
+                im.thumbnail((550, 300))
+                self.img = ImageTk.PhotoImage(im)
+        else:
+            im = 'Images/naoEncontrado.jpg'
+            im = Image.open(rf'{Path(im).absolute()}')
+            im.thumbnail((550, 300))
+            self.img = ImageTk.PhotoImage(im)
+
+        self.imagem.config(image=self.img)
+        self.sinopse.config(text=self.filme.sinopse)
+        self.titulo_informacao.config(text=self.filme.titulo)
+        self.genero_informacao.config(text=self.filme.genero)
+        self.ano_informacao.config(text=self.filme.ano)
+        self.nota_informacao.config(text=self.filme.nota)
+
+
+    def assistir_filme(self):
+        self.filme.aumentar_assistido()
+        banco_filmes.alterar_like_dados(valor=self.filme.assistido, id=self.filme.id)
+        startfile(self.filme.cam_filme)
+        self.master.destroy()
+        exit()
+
+    def tela_filme_aleatorio(self):
+        self.frame.pack()
+
+    def ir_tela_inicio(self):
+        self.frame.pack_forget()
+        self.master.title('MENU INICIAL')
+        tamanho_janela(self.master, 1135, 850)
+        self.app.atualiza_filmes(self.app.id)
+        self.app.tela_inicio()
 
 if __name__ == '__main__':
     app = SM(root)

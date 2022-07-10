@@ -6,6 +6,7 @@ import BACK_END.Filme as fl
 from tkinter.messagebox import showinfo, showwarning, askquestion, showerror, askyesno
 from tkinter import filedialog
 import BACK_END.ControleDeUsuario as cdu
+import re
 
 def mostrar_mensagem(mensagem,tipo='info'):
     if tipo == 'info':
@@ -21,6 +22,11 @@ def mostrar_mensagem(mensagem,tipo='info'):
     elif tipo == 'erro':
         showerror(
             title='ALERTA',
+            message=mensagem
+        )
+    else:
+        showinfo(
+            title=tipo,
             message=mensagem
         )
 
@@ -49,7 +55,7 @@ def verificar_arquivos(caminho):
     aux_lista = []
     for diretorio, subpastas, arquivos in walk(caminho):
         for arquivo in arquivos:
-            aux_lista.append(arquivo)
+            aux_lista.append(f'{diretorio}/{arquivo}')
     return aux_lista
 
 def formata_string(texto):
@@ -70,54 +76,15 @@ def escolher_diretorio(title):
     if diretorio == '':
         return False
     else:
-        mostrar_mensagem('Diretório Escolhido')
-
-    return diretorio
-
-def auxilar_filme():
-    diretorio = filedialog.askdirectory(
-        title='Escolha o diretório dos filmes',
-        initialdir='/'
-    )
-
-    if diretorio == '':
-        return False
-    else:
-        showinfo(
-            title='Diretório Escolhido',
-            message=diretorio
-        )
-
-    return diretorio
-
-def auxilar_imagem():
-    diretorio = filedialog.askdirectory(
-        title='Escolha o diretório das imagens',
-        initialdir='/'
-    )
-
-    if diretorio == '':
-        return False
-    else:
-        showinfo(
-            title='Diretório Escolhido',
-            message=diretorio
-        )
+        mostrar_mensagem(diretorio, 'Diretório Escolhido')
 
     return diretorio
 
 def verifica_caminho_imagens(caminho):
     lista_imagem = [imagem[:formata_string(imagem) - len(imagem)] for imagem in verificar_arquivos(caminho.caminho_imagem)]
     for imagem in lista_imagem:
-        if imagem == 'ERRO':
-            continue
-        id = imagem.find('(')
-        id2 = imagem.find(')')
-        if id - 2 < 0:
-            id3 = 0
-        else:
-            id3 = id - 2
-        if id == -1 or id2 == -1 or imagem[id - 1] != ' ' or len(imagem) < id + 5 or imagem[id + 5] != ')' or imagem[id - 2] == ' ' or imagem[id - 2] != imagem[id3]:
+        busca = re.search(r'[a-zA-Zà-úÁ-Úà-ùÀ-Ù\d\Wº]+[\s]{1}[(][\d]{4}[)]', imagem)
+        if not busca:
             mensagem = f'O arquivo {imagem} não está com nome adequado, arrume se quiser continuar\nExemplo: titulo (ano).extensao'
             mostrar_mensagem(mensagem)
             exit()
@@ -130,13 +97,8 @@ def verifica_caminho_imagens(caminho):
 def verifica_caminho_filmes(caminho):
     lista_filme = [filme[:formata_string(filme) - len(filme)] for filme in verificar_arquivos(caminho.caminho_filme)]
     for filme in lista_filme:
-        id = filme.find('(')
-        id2 = filme.find(')')
-        if id - 2 < 0:
-            id3 = 0
-        else:
-            id3 = id - 2
-        if id == -1 or id2 == -1 or filme[id-1] != ' ' or len(filme) < id+5 or filme[id+5] != ')' or filme[id-2] == ' ' or filme[id-2] != filme[id3]:
+        busca = re.search(r'[a-zA-Zà-úÁ-Úà-ùÀ-Ù\d\Wº]+[\s]{1}[(][\d]{4}[)]', filme)
+        if not busca:
             mensagem = f'O arquivo {filme} não está com nome adequado, arrume se quiser continuar\nExemplo: titulo (ano).extensao'
             mostrar_mensagem(mensagem)
             exit()
@@ -174,7 +136,7 @@ def criar_pastas():
                 exit()
 
     while True:
-        cam_imagem = auxilar_imagem()
+        cam_imagem = escolher_diretorio('Escolha o diretório das imagens')
         if cam_imagem != False:
             caminhos.append(cam_imagem)
             break

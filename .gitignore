@@ -2,5 +2,9 @@
 Scripts
 Lib
 Source/__pycache__
+.idea
 pyvenv.cfg
+__pycache__
+banco.db
+Source/BACK_END/__pycache__
 

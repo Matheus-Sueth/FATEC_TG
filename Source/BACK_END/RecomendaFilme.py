@@ -3,15 +3,6 @@ import json
 import unidecode
 from os import walk
 
-
-def verificar_arquivos(caminho_filme):
-    aux_lista = []
-    for diretorio, subpastas, arquivos in walk(caminho_filme):
-        for arquivo in arquivos:
-            aux_lista.append(arquivo)
-    return aux_lista
-
-
 def compatibilidade():
     id = 101
     l1 = ['v', 'e', 'l', 'o', 'z', 'e', 's', 'e', 'f', 'u', 'r', 'i', 'o', 's', 'o', 's', '8']
@@ -45,7 +36,6 @@ def compatibilidade():
             if contador >= len(vetor) // 2:
                 return id
     return False
-
 
 def comparar_string(strings, filme):
     print(strings)
@@ -89,7 +79,6 @@ def comparar_string(strings, filme):
                         if contador >= (t2 // 2)-1:
                             return id
     return False
-
 
 def informacoes(arquivo, ano=True):
     API_KEY = '9ccf9fd2aaa2811eabe3d8060d4b6e9f'
@@ -226,7 +215,6 @@ def informacoes3(arquivo):
                     f'https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&language=pt-BR&query={filme[0]}&page={pagina}&year={filme[1]}')
                 resposta = response.json()
 
-
 def generos(ids):
     with open("BACK_END/generos.json", encoding='utf-8') as meu_json:
         genero = json.load(meu_json)
@@ -235,7 +223,6 @@ def generos(ids):
         juncao+=genero[str(i)]+'/'
     #print('GENERO = ',juncao[:-1])
     return juncao[:-1]
-
 
 if __name__ == '__main__':
     arquivo = 'Capitão América - O Primeiro Vingador (2011)'
