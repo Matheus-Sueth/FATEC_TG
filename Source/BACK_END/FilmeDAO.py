@@ -43,8 +43,9 @@ class FilmeDAO:
             lista.append(filme)
         return Colecao(lista, 'Filmes')
 
-    def ler_dados_ordenados(self):
-        self.__cursor.execute('SELECT * FROM filmes ORDER BY titulo, ano')
+    def ler_dados_ordenados(self, usuario_id):
+        lista = []
+        self.__cursor.execute(f'SELECT * FROM filmes WHERE usuario_id == {usuario_id} ORDER BY titulo, ano')
         result = self.__cursor.fetchall()
         for dados in result:
             filme = Filme(
@@ -74,6 +75,23 @@ class FilmeDAO:
             f'DELETE FROM filmes WHERE id="{indice}"')
         self.__banco_conectado.commit()
 
-    def procurar_filmes(self):
-        self.__cursor.execute('SELECT titulo,ano,extensao FROM filmes')
-        return self.__cursor.fetchall()
+    def procurar_filmes(self, coluna, texto):
+        lista = []
+        aux = [auxiliar for auxiliar in texto]
+        texto2 = '%'.join(aux)
+        self.__cursor.execute(f'SELECT * FROM filmes WHERE "{coluna}" LIKE "%{texto2}%"')
+        result = self.__cursor.fetchall()
+        for dados in result:
+            filme = Filme(
+                id=dados[0],
+                titulo=dados[2],
+                ano=dados[3],
+                nota=dados[4],
+                genero=dados[5],
+                extensao=dados[6],
+                cam_filme=dados[7],
+                cam_imagem=dados[8],
+                valor=dados[9],
+                sinopse=dados[10])
+            lista.append(filme)
+        return Colecao(lista, f'Filmes ordenados pela coluna: {coluna}')
