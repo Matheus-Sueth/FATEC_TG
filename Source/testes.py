@@ -117,10 +117,6 @@ class SM:
         self.page_Cadastro = Cadastro(master=self.root, app=self)
         self.page_Cadastro.tela_cadastro()
 
-    def logoff(self):
-        resposta = messagebox.askquestion(
-            "AVISO", "Você tem certeza ?")
-
     def tela_SM(self):
         self.frame.pack()
 
@@ -2755,6 +2751,7 @@ class Pesquisar_Filme:
         self.alterar_eventos()
 
     def alterar_eventos(self):
+        print(self.lista_filmes)
         filme = self.lista_filmes[self.id]
         self.img = WebImage(filme[4], largura=550, altura=300).get()
         self.imagem.config(image=self.img)
