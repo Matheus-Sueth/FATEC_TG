@@ -160,16 +160,23 @@ def informacoes2(arquivo, ano=True,pagina=1):
                     lista.append([titulo, genero, data, sinopse, imgURL])
         return lista
 
-def informacoes3(arquivo):
+def informacoes3(arquivo,ano=True):
     API_KEY = '9ccf9fd2aaa2811eabe3d8060d4b6e9f'
     filme = arquivo.split(' (')
     filme[1] = filme[1][:4]
-    response = requests.get(f'https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&language=pt-BR&query={filme[0]}&page=1&year={filme[1]}')
+    if ano:
+        response = requests.get(f'https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&language=pt-BR&query={filme[0]}&page=1&year={filme[1]}')
+    else:
+        response = requests.get(
+            f'https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&language=pt-BR&query={filme[0]}&page=1')
     if response.ok:
         resposta = response.json()
         tamanho = resposta['total_pages']
         if tamanho <= 0:
-            return 'Filme não Encontrado'
+            if not ano:
+                return 'Falha'
+            auxiliar = informacoes3(arquivo,ano=False)
+            return auxiliar
         elif tamanho == 1:
             lista = []
             fim = resposta['total_results']
@@ -193,10 +200,8 @@ def informacoes3(arquivo):
                         try:
                             id = resposta['results'][indice]['id']
                         except:
-                            print(indice)
-                            print(resposta)
                             exit()
-                        data = resposta['results'][indice]['release_date']
+                        data = resposta['results'][indice].get('release_date','')
                         titulo = resposta['results'][indice]['title']
                         genero = generos(resposta['results'][indice]['genre_ids'])
                         sinopse = resposta['results'][indice]['overview']
@@ -211,8 +216,12 @@ def informacoes3(arquivo):
                 elif pagina < tamanho:
                     pagina+=1
 
-                response = requests.get(
-                    f'https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&language=pt-BR&query={filme[0]}&page={pagina}&year={filme[1]}')
+                if ano:
+                    response = requests.get(
+                        f'https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&language=pt-BR&query={filme[0]}&page={pagina}&year={filme[1]}')
+                else:
+                    response = requests.get(
+                        f'https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&language=pt-BR&query={filme[0]}&page={pagina}')
                 resposta = response.json()
 
 def generos(ids):
