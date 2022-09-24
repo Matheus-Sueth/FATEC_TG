@@ -1,19 +1,21 @@
 from tkinter import *
-from tkinter.ttk import Combobox
+from tkinter.ttk import Combobox, Progressbar
 from PIL import ImageTk
 from PIL import Image
-from BACK_END.ControleDasPastas import *
+from BACK_END.ControleDeTela import *
 from BACK_END.Usuario import Usuario
-from BACK_END.PastasDAO import PastaDAO, Pasta, Colecao
-from pathlib import Path
+from BACK_END.PastasDAO import PastaDAO
+from BACK_END.Pastas import Pasta
+from BACK_END.Filme import Filme
+from BACK_END.Colecao import Colecao
 from BACK_END.RecomendaFilme import *
 import urllib.request
 import io
 import re
+from pathlib import Path
 from os.path import isfile
 from os import startfile
 from random import randint
-import datetime
 
 def tamanho_janela(menu, win_width, win_height):
     screen_width = menu.winfo_screenwidth()
@@ -32,10 +34,11 @@ class WebImage:
             raw_data = u.read()
         image = Image.open(io.BytesIO(raw_data))
         image.thumbnail((largura, altura))
-        self.image = ImageTk.PhotoImage(image)
+        self.__image = ImageTk.PhotoImage(image)
 
-    def get(self):
-        return self.image
+    @property
+    def image(self):
+        return self.__image
 
 class SM:
     def __init__(self, root=None):
@@ -152,9 +155,8 @@ class Login:
             border=2,
             relief=GROOVE
         )
-        self.entrada_email.insert(0,'matheus')
         self.entrada_email.pack()
-
+        self.entrada_email.insert(0, 'matheus@gmail.com')
         frame_senha = Frame(self.frame, bg='#154f91')
         frame_senha.pack(pady=20)
         label_senha = Label(
@@ -178,9 +180,8 @@ class Login:
             relief=GROOVE,
             show='*'
         )
-        self.entrada_senha.insert(0,'1234')
         self.entrada_senha.pack()
-
+        self.entrada_senha.insert(0, '1234')
         frame_botao = Frame(self.frame, bg='#154f91')
         frame_botao.pack(pady=20)
         botao = Button(
@@ -218,36 +219,32 @@ class Login:
             mostrar_mensagem('campo SENHA não foi preenchido', 'aviso')
             self.entrada_senha.focus_set()
         else:
-            usuario_login = Usuario(-1,'',email,senha,'')
-            usuarios = cdu.atualiza_banco(cdu.banco_usuarios)
-            lista_pastas = banco_pastas.ler_dados()
-            for usuario in usuarios:
-                if usuario == usuario_login:
-                    self.usuario = usuario
-                    self.indice = usuario.id
-                    #self.indice = usuarios[usuarios.index(usuario)]
-                    for pasta in lista_pastas:
-                        if pasta[1] == self.indice:
-                            self.pasta_usuario = pasta
-                            break
-                    else:
-                        mostrar_mensagem('Usuário Encontrado e validado, mas para continuarmos vamos procurar a pasta dos filmes e a pasta das imagens', 'aviso')
-                        caminho.caminho_filme, caminho.caminho_imagem = criar_pastas()
-                        self.pasta_usuario = caminho
-                        banco_pastas.inserir_dados(len(lista_pastas) + 1, self.indice, self.pasta_usuario)
-                        mostrar_mensagem('Pastas Criadas\nPodemos prosseguir','info')
-                    self.ir_tela_inicio()
-                    break
-                elif (usuario == usuario_login) == False:
-                    mostrar_mensagem('Usuário encontrado, mas a senha está incorreta', 'aviso')
-                    break
+            usuario_login = Usuario(0,'Usuario',email,senha,'Images/foto.png')
+            resultado = banco_usuarios.ler_dados_usuario(usuario_login)
+            if type(resultado) != Usuario:
+                if resultado == False:
+                    mostrar_mensagem('E-mail ou senha com valores fora das diretrizes do sistema', 'aviso')
+                if resultado == None:
+                    mostrar_mensagem('Usuário não encontrado', 'aviso')
+                return ''
+            if usuario_login != resultado:
+                mostrar_mensagem('Usuário encontrado, mas a senha está incorreta', 'aviso')
+                return ''
+
+            self.usuario = resultado
+            self.indice = resultado.id
+            pasta_usuario = banco_pastas.ler_pastas_usuario(self.usuario)
+            if type(pasta_usuario) != Pasta:
+                mostrar_mensagem(f'Nenhuma pasta foi encontrada para o usuário {usuario.nome}. Então nós iremos procurar os diretórios de imagem e de filme', 'aviso')
+                self.pasta_usuario = Pasta(0,self.usuario.id,'','',banco_usuarios.banco)
+                self.pasta_usuario.caminho_filme, self.pasta_usuario.validar_caminho_imagem = criar_pastas()
+                banco_pastas.inserir_dados(self.pasta_usuario)
             else:
-                mostrar_mensagem('Usuário não encontrado','aviso')
+                self.pasta_usuario = pasta_usuario
+            self.ir_tela_inicio()
 
     def tela_login(self):
         self.frame.pack()
-        # self.entrada_email.delete(0,END)
-        # self.entrada_senha.delete(0,END)
 
     def ir_tela_cadastro(self):
         self.frame.pack_forget()
@@ -261,11 +258,11 @@ class Login:
         self.app.tela_SM()
 
     def ir_tela_inicio(self):
-        verifica_caminho_filmes(self.pasta_usuario[2])
-        verifica_caminho_imagens(self.pasta_usuario[2])
+        verifica_caminho_filmes(self.pasta_usuario)
+        verifica_caminho_imagens(self.pasta_usuario)
         self.frame.pack_forget()
-        self.page_2 = Inicio(master=self.master, app=self)
-        self.page_2.tela_inicio()
+        self.page_Inicio = Inicio(master=self.master, app=self)
+        self.page_Inicio.tela_inicio()
 
 class Cadastro:
     def __init__(self, master=None, app=None):
@@ -395,18 +392,22 @@ class Cadastro:
 
     def cadastro(self):
         if self.caminho_foto == '':
-            resposta = perguntar('Aviso','Campo FOTO não foi preenchido\nDeseja continuar mesmo assim ?')
+            resposta = perguntar('Aviso','Campo FOTO não foi preenchido\nDeseja utilizar uma imagem padrão?')
             if not resposta:
                 self.botao_2.focus_set()
                 return None
             else:
-                self.caminho_foto = 'Images/foto.png'
-                im = Image.open(self.caminho_foto)
-                im.thumbnail((150, 150))
-                self.photoImg = ImageTk.PhotoImage(im)
-                self.botao_2.configure(text='', image=self.photoImg, height=150, width=150)
-
-        if self.entrada_nome.get() == '':
+                try:
+                    self.caminho_foto = 'Images/foto.png'
+                    im = Image.open(self.caminho_foto)
+                    im.thumbnail((150, 150))
+                    self.photoImg = ImageTk.PhotoImage(im)
+                    self.botao_2.configure(text='', image=self.photoImg, height=150, width=150)
+                except:
+                    mostrar_mensagem('Não estou conseguindo acessar a imagem padrão.'
+                                     ' Por favor escolha uma foto se deseja continuar.\nSe o erro persistir contate o desenvolvedor')
+                    return None
+        elif self.entrada_nome.get() == '':
             mostrar_mensagem('Campo NOME não foi preenchido', 'aviso')
             self.entrada_nome.focus_set()
         elif self.entrada_email.get() == '':
@@ -420,18 +421,23 @@ class Cadastro:
             nome = self.entrada_nome.get()
             email = self.entrada_email.get()
             senha = self.entrada_senha.get()
-            indice = len(cdu.lista_usuarios)+1
-            novo_usuario = Usuario(indice,nome.title(), email, senha, foto)
-            banco_usuarios.inserir_dados(novo_usuario)
-            mostrar_mensagem('Usuário Criado\nAgora vamos procurar a pasta dos filmes e a pasta das imagens', 'info')
-            caminho.caminho_filme, caminho.caminho_imagem = criar_pastas()
-            banco_pastas.inserir_dados(len(lista_pastas)+1,indice,caminho)
-            mostrar_mensagem('Pastas Criadas\nPodemos prosseguir', 'info')
-            self.ir_tela_login()
+            indice = 0
+            self.novo_usuario = Usuario(indice,nome, email, senha, foto)
+            result = banco_usuarios.inserir_dados(self.novo_usuario)
+            if result == None:
+                mostrar_mensagem('Os dados não condizem com as diretrizes do sistema, por favor verifique se elas estão corretas')
+                return None
+            elif not result:
+                mostrar_mensagem('Já existe esse email no sistema, a criação de usuário foi cancelada\nPara continuar troque o email')
+                return None
+            else:
+                mostrar_mensagem('Usuário Criado\nAgora vamos para a tela de login', 'info')
+                self.ir_tela_login()
 
     def ir_tela_login(self):
         self.frame.pack_forget()
         self.page_Login = Login(master=self.master, app=self.app)
+        self.page_Login.entrada_email.insert(0,self.novo_usuario.email)
         self.page_Login.tela_login()
 
     def tela_cadastro(self):
@@ -447,7 +453,6 @@ class Inicio:
     def __init__(self, master=None, app=None):
         self.master = master
         self.master.bind("<MouseWheel>", self.mouse_wheel)
-        # with Linux OS
         self.master.bind("<Button-4>", self.mouse_wheel)
         self.master.bind("<Button-5>", self.mouse_wheel)
         self.app = app
@@ -455,7 +460,7 @@ class Inicio:
         self.usuario = self.app.usuario
         self.filmes = banco_filmes.ler_dados(usuario_id=self.usuario.id)
         self.master.title('MENU INICIAL')
-        tamanho_janela(self.master, 1125, 850)
+        tamanho_janela(self.master, 1130, 850)
         self.frame = Frame(self.master, bg='#154f91')
         self.frame.pack()
 
@@ -465,7 +470,7 @@ class Inicio:
         self.mouse = 0
         self.end_barra = len(self.filmes) // 6 if len(self.filmes) % 6 != 0 or len(self.filmes) == 0 else len(self.filmes) // 6 - 1
         self.sliderlength = [dado[1] for dado in self.objeto if self.end_barra <= dado[0]][0]
-        self.barra = Scale(self.frame, from_=self.id, to=self.end_barra, width=22, sliderlength=self.sliderlength, length=850, command=self.vervalor)
+        self.barra = Scale(self.frame, from_=self.id, to=self.end_barra, width=25, sliderlength=self.sliderlength, length=850, command=self.vervalor)
         self.barra.pack(side=RIGHT)
 
         frame_foto = Frame(self.frame, bg='#154f91')
@@ -573,8 +578,6 @@ class Inicio:
                 im = Image.open(rf'{Path(im).absolute()}')
                 im.thumbnail((150, 150))
                 self.photoFilme.append(ImageTk.PhotoImage(im))
-
-        for numero in range(6):
             try:
                 self.nomes_filmes.append([self.filmes[numero].titulo, self.filmes[numero]])
             except:
@@ -650,7 +653,6 @@ class Inicio:
 
     def ordenar(self):
         self.atualiza_filmes(indice=self.id,tipo='abc')
-        #print(f'Ordenar {self.filmes} por ?')
 
     def pesquisar_filmes(self):
         self.frame.pack_forget()
@@ -667,12 +669,11 @@ class Inicio:
 
     def recomendacao(self):
         print('Gerar recomendação de filme')
-        print(self.titulo_filmes)
 
     def aleatorio(self):
         if len(self.filmes) == 0:
             mostrar_mensagem('Nenhum filme foi encontrado','aviso')
-            return ''
+            return None
         self.frame.pack_forget()
         self.page_Aleatorio_Filme = Aleatorio_Filme(master=self.master, app=self)
         self.page_Aleatorio_Filme.tela_filme_aleatorio()
@@ -687,7 +688,7 @@ class Inicio:
                 self.filmes = banco_filmes.ler_dados_ordenados(usuario_id=self.usuario.id)
         label_nome_texto = f'{len(self.filmes):>04} Filmes' if len(self.filmes) != 1 else f'{len(self.filmes):>04} Filme'
         self.label_nome.config(text=label_nome_texto)
-        self.end_barra = len(self.filmes) // 6 if len(self.filmes) % 6 != 0 else len(self.filmes) // 6 - 1
+        self.end_barra = len(self.filmes) // 6 if len(self.filmes) % 6 != 0 or len(self.filmes) == 0 else len(self.filmes) // 6 - 1
         self.sliderlength = [dado[1] for dado in self.objeto if self.end_barra <= dado[0]][0]
         self.barra.config(to=self.end_barra, sliderlength=self.sliderlength)
         for numero in range(indice, indice+6):
@@ -700,7 +701,6 @@ class Inicio:
                 im = Image.open(rf'{Path(im).absolute()}')
                 im.thumbnail((150, 150))
                 self.photoFilme.append(ImageTk.PhotoImage(im))
-        for numero in range(indice, indice+6):
             try:
                 self.nomes_filmes.append([self.filmes[numero].titulo,self.filmes[numero]])
             except:
@@ -715,12 +715,9 @@ class Inicio:
         self.atualiza_filmes(self.id,False)
 
     def logoff(self):
-        resposta = perguntar('AVISO','Você tem certeza que deseja fazer logoff?')
-        if resposta:
-            self.master.title('LOGIN')
-            tamanho_janela(self.master, 700, 300)
-            self.frame.pack_forget()
-            self.app.tela_login()
+        self.frame.pack_forget()
+        self.page_Consultar_Usuario = Consultar_Usuario(master=self.master, app=self)
+        self.page_Consultar_Usuario.tela_consultar_usuario()
 
     def tela_inicio(self):
         self.frame.pack()
@@ -912,39 +909,41 @@ class ADD_Filme:
         self.botao_slc_arquivo.config(text='SELECIONAR\nARQUIVO\nDO FILME')
 
     def adicionar_filmes(self):
-        imagem = self.caminho_foto
-        if imagem == '':
+        if self.caminho_foto == '':
             self.botao_slc_imagem.focus_set()
             mostrar_mensagem('Para adicionar um filme, você deve selecionar uma imagem')
             return ''
         nota = self.combobox_slc_nota.get()
-        filme = self.caminho_filme
-        if filme == '':
+        if self.caminho_filme == '':
             self.botao_slc_arquivo.focus_set()
             mostrar_mensagem('Para adicionar um filme, você deve selecionar um arquivo')
             return ''
-        genero = ''.join(char.replace(char, '/') if not char.isalnum() and not '/' == char else char for char in self.entrada_genero.get())
-        if 'Ficção/Científica' in genero:
-            genero = genero.replace('Ficção/Científica','Ficção Científica')
-        if 'Cinema/TV' in genero:
-            genero = genero.replace('Cinema/TV','Cinema TV')
-        if genero == '':
+        if self.entrada_genero.get() == '':
             self.entrada_genero.focus_set()
             mostrar_mensagem('Para adicionar um filme, você deve adicionar texto ao campo genêro')
             return ''
-        sinopse = self.entrada_sinopse.get('1.0','end').strip()
+        sinopse = self.entrada_sinopse.get('1.0','end')
         if sinopse == '':
             self.entrada_sinopse.focus_set()
             mostrar_mensagem('Para adicionar um filme, você deve adicionar texto ao campo sinopse')
             return ''
 
-        aux_filme = re.split(r"[/()]\s*", filme)
+        arquivo = self.caminho_filme.split('/')
+        lista = informacoes3(arquivo[-1])
+        for dados in lista:
+            if titulo == dados[0]:
+                id = dados[5]
+                break
+        else:
+            id = self.id_filme
+
+        aux_filme = re.split(r"[/()]\s*", self.caminho_filme)
         titulo = aux_filme[-3].strip()
         ano = int(aux_filme[-2])
         extensao = aux_filme[-1].strip()
         valores = banco_filmes.ler_dados(usuario_id=self.usuario.id)
 
-        aux = fl.Filme('',titulo,ano,'','','','','','')
+        aux = Filme(id, titulo, ano, nota, self.entrada_genero.get(), extensao, self.caminho_filme , self.caminho_foto, self.entrada_sinopse.get('1.0','end'))
 
         for valor in valores:
             if valor == aux:
@@ -954,12 +953,12 @@ class ADD_Filme:
         arquivos = ['png', 'jpg', 'jfif', 'jpeg']
         arquivo_encontrado = False
         for ext in arquivos:
-            existe_arquivo = fr'{self.pastas[2].caminho_imagem}/{titulo} ({ano}).{ext}'
+            existe_arquivo = fr'{self.pastas.caminho_imagem}/{titulo} ({ano}).{ext}'
             if isfile(existe_arquivo):
                 arquivo_encontrado = True
                 break
         else:
-            existe_arquivo = fr'{self.pastas[2].caminho_imagem}/{titulo} ({ano}).png'
+            existe_arquivo = fr'{self.pastas.caminho_imagem}/{titulo} ({ano}).png'
 
         if arquivo_encontrado and 'http://image.tmdb.org/' in imagem:
                 self.photoImg = WebImage(imagem, 350, 150).get()
@@ -1015,22 +1014,12 @@ class ADD_Filme:
                                  Para prosseguir você tem que arrumar os arquivos\nArquivo do filme = {auxiliar_filme}\nArquivo da imagem = {auxiliar_imagem[-2]}','erro')
                 return ''
 
-        if filme == '':
-            arquivo = self.caminho_filme.split('/')
-            lista = informacoes3(arquivo[-1])
-            for dados in lista:
-                if titulo == dados[0]:
-                    id = dados[5]
-                    break
-            else:
-                id = self.id_filme
-        else:
-            id = self.id_filme
+
 
         if '/' in genero:
             genero = genero.title()
 
-        aux = fl.Filme(
+        aux = Filme(
             id=f'{self.usuario.id}.{id}',
             titulo=titulo,
             ano=ano,
@@ -1049,22 +1038,22 @@ class ADD_Filme:
         filme = self.caminho_filme
         if filme == '':
             mostrar_mensagem('Para procurar e adicionar as informações de um filme, você deve selecionar um filme')
-            return ''
+            return None
         arquivo = self.caminho_filme.split('/')
-        lista = informacoes3(arquivo[-1])
-        if type(lista) == str:
+        lista = procurar_filme_api(arquivo[-1],True)
+        if not lista:
             mostrar_mensagem(f'O filme: {arquivo[-1]}\nNão foi encontrado na base. Procure seu filme na tela de pesquisa')
-            return ''
         else:
             self.frame.pack_forget()
             self.page_ADD_Auxiliar = ADD_Auxiliar(master=self.master, app=self, lista=lista)
             self.page_ADD_Auxiliar.tela_auxiliar()
+        return None
 
     def selecionar_arquivo(self, tipo_arquivo, title):
         if title == 'Escolha uma imagem':
-            inicio = self.pastas[2].caminho_imagem
+            inicio = self.pastas.caminho_imagem
         else:
-            inicio = self.pastas[2].caminho_filme
+            inicio = self.pastas.caminho_filme
         while True:
             caminho = filedialog.askopenfilename(
                 title=title,
@@ -1078,9 +1067,9 @@ class ADD_Filme:
                 break
         if title == 'Escolha uma imagem':
             try:
-                tam_caminho_imagem = self.pastas[2].caminho_imagem
-                if caminho[:len(tam_caminho_imagem)] != self.pastas[2].caminho_imagem:
-                    mostrar_mensagem(f'Arquivo da imagem não está dentro da pasta = {self.pastas[2].caminho_imagem}',
+                tam_caminho_imagem = self.pastas.caminho_imagem
+                if caminho[:len(tam_caminho_imagem)] != self.pastas.caminho_imagem:
+                    mostrar_mensagem(f'Arquivo da imagem não está dentro da pasta = {self.pastas.caminho_imagem}',
                                      'erro')
                     return ''
                 self.caminho_foto = caminho
@@ -1094,9 +1083,9 @@ class ADD_Filme:
                 mostrar_mensagem('Arquivo de imagem corrompido ou inválido', 'erro')
         else:
             try:
-                tam_caminho_filme = self.pastas[2].caminho_filme
-                if caminho[:len(tam_caminho_filme)] != self.pastas[2].caminho_filme:
-                    mostrar_mensagem(f'Arquivo do filme não está dentro da pasta = {self.pastas[2].caminho_filme}', 'erro')
+                tam_caminho_filme = self.pastas.caminho_filme
+                if caminho[:len(tam_caminho_filme)] != self.pastas.caminho_filme:
+                    mostrar_mensagem(f'Arquivo do filme não está dentro da pasta = {self.pastas.caminho_filme}', 'erro')
                     return ''
                 self.caminho_filme = caminho
                 arquivo = self.caminho_filme.split('/')
@@ -1133,10 +1122,26 @@ class ADD_Filme:
         self.app.tela_inicio()
 
     def procurar_filmes(self):
-        self.filmes = verificar_arquivos(self.pastas[2].caminho_filme)
-        self.imagens = verificar_arquivos(self.pastas[2].caminho_imagem)
+        self.frame.pack_forget()
+        tamanho_janela(self.master, 800, 150)
+        frame = Frame(self.master, bg='#154f91')
+        pb = Progressbar(
+            frame,
+            orient='horizontal',
+            mode='determinate',
+            length=650
+        )
+        pb.grid(column=0, row=0, columnspan=2, pady=20)
+        value_label = Label(frame, text=f"Progresso: {pb['value']}%", bg='#154f91', fg='white', font=('Arial',20))
+        value_label.grid(column=0, row=2, columnspan=2)
+        frame.pack()
+        self.filmes = verificar_arquivos(self.pastas.caminho_filme)
+        self.imagens = verificar_arquivos(self.pastas.caminho_imagem)
         valores = banco_filmes.ler_dados(usuario_id=self.usuario.id)
         for indice in range(len(self.filmes)):
+            pb['value'] = int(((indice+1)*100)/len(self.filmes))
+            value_label['text'] = f"Progresso: {pb['value']}%"
+            self.master.update_idletasks()
             self.caminho_filme = self.filmes[indice]
             self.caminho_foto = ''
             #self.botao_slc_arquivo.config(text=filme)
@@ -1144,169 +1149,102 @@ class ADD_Filme:
             titulo = aux_filme[-3].strip()
             ano = int(aux_filme[-2])
             extensao = aux_filme[-1].strip()
-            aux = fl.Filme('', titulo, ano, '', '', extensao, self.filmes[indice], '', '')
-            if aux in valores:
+            auxliar_filme = Filme('', titulo, ano, '', '', extensao, self.filmes[indice], '', '')
+            if auxliar_filme in valores:
                 continue
             arquivo = self.caminho_filme.split('/')
-            lista = informacoes3(arquivo[-1])
-
-            if type(lista) == str:
-                mostrar_mensagem(f'O filme: {aux}\nNão foi encontrado na base. Procure seu filme na tela de pesquisa')
-                return ''
+            lista = procurar_filme_api(arquivo[-1], True)
+            if not lista:
+                lista = procurar_filme_api(arquivo[-1], False)
+                if not lista:
+                    mostrar_mensagem(
+                        f'O filme: {auxliar_filme}\nNão foi encontrado na base. Procure seu filme na tela de pesquisa')
+                    tamanho_janela(self.master, 950, 820)
+                    frame.pack_forget()
+                    self.frame.pack()
+                    return None
+                elif len(lista) > 1:
+                    self.botao_slc_arquivo.config(text=self.filmes[indice])
+                    frame.pack_forget()
+                    self.page_ADD_Auxiliar = ADD_Auxiliar(master=self.master, app=self, lista=lista)
+                    self.page_ADD_Auxiliar.tela_auxiliar()
+                    mostrar_mensagem(f'Vamos adicionar agora o filme:\n{auxliar_filme}')
+                    return None
             elif len(lista) > 1:
                 self.botao_slc_arquivo.config(text=self.filmes[indice])
-                self.frame.pack_forget()
+                frame.pack_forget()
                 self.page_ADD_Auxiliar = ADD_Auxiliar(master=self.master, app=self, lista=lista)
                 self.page_ADD_Auxiliar.tela_auxiliar()
-                mostrar_mensagem(f'Vamos adicionar agora o filme:\n{aux}')
-                return ''
+                mostrar_mensagem(f'Vamos adicionar agora o filme:\n{auxliar_filme}')
+                return None
 
-            auxiliar_ano = int(lista[0][2][:4])
+            filme_api = lista[0]
 
-            if auxiliar_ano != ano:
-                lista = informacoes3(arquivo[-1],ano=False)
+            if filme_api.verificar_null():
 
-            if type(lista) == str:
-                mostrar_mensagem(f'O filme: {aux}\nNão foi encontrado na base. Procure seu filme na tela de pesquisa')
-                return ''
-            elif len(lista) > 1:
-                self.botao_slc_arquivo.config(text=self.filmes[indice])
-                self.frame.pack_forget()
-                self.page_ADD_Auxiliar = ADD_Auxiliar(master=self.master, app=self, lista=lista)
-                self.page_ADD_Auxiliar.tela_auxiliar()
-                mostrar_mensagem(f'Vamos adicionar agora o filme:\n{aux}')
-                return ''
 
-            auxiliar_lista = lista[0][0].replace(':',' -')
+            if filme_api.ano != ano:
+                mostrar_mensagem(f'O filme: {auxliar_filme} está com o ano errado no arquivo.\nAltere para {filme_api.titulo} ({filme_api.ano}){extensao}')
+                tamanho_janela(self.master, 950, 820)
+                frame.pack_forget()
+                self.frame.pack()
+                return None
 
-            if auxiliar_lista.lower() != titulo.lower():
-                mostrar_mensagem(f'O filme: {aux} está com o nome errado no arquivo.\nAltere para {auxiliar_lista} ({lista[0][2][:4]}){extensao}')
-                return ''
-
-            if int(lista[0][2][:4]) != ano:
-                mostrar_mensagem(f'O filme: {aux} está com o ano errado no arquivo.\nAltere para {lista[0][0]} ({lista[0][2][:4]}){extensao}')
-                return ''
-
-            self.caminho_foto = lista[0][4]
-
-            #for imagem in self.imagens:
-             #   aux_imagem = re.split(r"[/()]\s*", imagem)
-              #  if titulo.strip() == aux_imagem[-3].strip() and ano == int(aux_imagem[-2]):
-               #     self.caminho_foto = imagem
-                #    aux_img = Image.open(self.caminho_foto)
-                 #   aux_img.thumbnail((150, 150))
-                  #  self.photoImg = ImageTk.PhotoImage(aux_img)
-                   # self.botao_slc_imagem.config(image=self.photoImg, height=150, width=150)
-                    #break
-
-            arquivos = ['png', 'jpg', 'jfif', 'jpeg']
-            arquivo_encontrado = False
+            arquivos = ('png', 'jpg', 'jfif', 'jpeg')
             for ext in arquivos:
-                existe_arquivo = fr'{self.pastas[2].caminho_imagem}/{titulo} ({ano}).{ext}'
-                if isfile(existe_arquivo):
+                existe_arquivo = fr'{self.pastas.caminho_imagem}/{titulo} ({ano}).{ext}'
+                if existe_arquivo in self.imagens:
                     self.caminho_foto = existe_arquivo
-                    arquivo_encontrado = True
                     break
             else:
-                existe_arquivo = fr'{self.pastas[2].caminho_imagem}/{titulo} ({ano}).png'
+                existe_arquivo = fr'{self.pastas.caminho_imagem}/{titulo} ({ano}).png'
+                if filme_api.imgURL == None:
+                    mostrar_mensagem(f'Não foi possível realizar o download do filme: {self.filmes[indice]}\n'
+                                    'Você vai ter que fazer o download do filme manualmente, completando os campos em branco','Problema com a imagem do filme')
+                    self.caminho_foto = ''
+                    self.botao_slc_imagem.config(
+                        image='',
+                        height=5,
+                        width=15,
+                        text='SELECIONAR\nIMAGEM\nDO FILME',
+                        font=('Arial', 18))
+                    self.combobox_slc_nota.current(0)
+                    self.entrada_genero.delete(0, END)
+                    self.entrada_sinopse.delete(1.0, END)
+                    self.botao_slc_arquivo.config(text='SELECIONAR\nARQUIVO\nDO FILME')
 
-            if arquivo_encontrado and 'http://image.tmdb.org/' in self.caminho_foto:
-                resposta = perguntar("AVISO", f"Já existe essa imagem({existe_arquivo})\nDeseja substituir a imagem?")
-                if not resposta:
-                    self.caminho_foto = existe_arquivo
-                    resposta2 = perguntar("AVISO", f"Deseja utilizar a imagem existente no caminho ({existe_arquivo})?")
-                    if not resposta2:
-                        mostrar_mensagem('Então o filme não será adicionado', 'aviso')
-                        return ''
-                else:
-                    with open(existe_arquivo, 'wb') as self.caminho_foto:
-                        respost = requests.get(self.caminho_foto, stream=True)
-
-                        if not respost.ok:
-                            mostrar_mensagem(
-                                'Desculpe, mas não é possível fazer o download da imagem\nPeço para entrar em contato com o desenvolvedor e não realizar download de imagem até o problema ser corrigido',
-                                'erro')
-                            return ''
-                        else:
-                            for dado in respost.iter_content(1024):
-                                if not dado:
-                                    break
-
-                                self.caminho_foto.write(dado)
-
-                            #mostrar_mensagem('Imagem salva com sucesso')
-                    self.caminho_foto = existe_arquivo
-            elif 'http://image.tmdb.org/' in self.caminho_foto:
-                with open(existe_arquivo, 'wb') as imagem:
-                    respost = requests.get(self.caminho_foto, stream=True)
-
-                    if not respost.ok:
-                        mostrar_mensagem(
-                            'Desculpe, mas não é possível fazer o download da imagem\nPeço para entrar em contato com o desenvolvedor e não realizar download de imagem até o problema ser corrigido',
-                            'erro')
-                        return ''
-                    else:
-                        for dado in respost.iter_content(1024):
-                            if not dado:
-                                break
-
-                            imagem.write(dado)
-
-                        #mostrar_mensagem('Imagem salva com sucesso')
+                if not filme_api.download_imagem(existe_arquivo):
+                    mostrar_mensagem(
+                        f'Desculpe houve uma falha no download da imagem do filme: {self.filmes[indice]}\nPeço para entrar em contato com o desenvolvedor e não realizar download de imagem até o problema ser corrigido',
+                        'erro')
+                    tamanho_janela(self.master, 950, 820)
+                    frame.pack_forget()
+                    self.frame.pack()
+                    return None
                 self.caminho_foto = existe_arquivo
-            else:
-                auxiliar_filme = f'{titulo} ({ano})'
-                auxiliar_imagem = re.split(r"[/)]\s*", self.caminho_foto)
-                auxiliar_imagem2 = auxiliar_imagem[-2] + ')'
-                if auxiliar_filme != auxiliar_imagem2:
-                    mostrar_mensagem(f'O arquivo do filme e o arquivo da imagem estão com titulo ou ano diferentes\n \
-                                             Para prosseguir você tem que arrumar os arquivos\nArquivo do filme = {auxiliar_filme}\nArquivo da imagem = {auxiliar_imagem2}',
-                                     'erro')
-                    return ''
-
-            if len(lista) == 1 and type(lista) == list:
-                #self.entrada_genero.delete(0, "end")
-                #self.entrada_sinopse.delete(1.0, END)
-                #self.entrada_genero.insert(0, lista[0][1].strip())
-                #self.entrada_sinopse.insert('1.0', lista[0][3].strip())
-                genero = ''.join(char.replace(char, '/') if not char.isalnum() and not '/' == char else char for char in
-                                 lista[0][1])
-                if 'Ficção/Científica' in genero:
-                    genero = genero.replace('Ficção/Científica', 'Ficção Científica')
-                if 'Cinema/TV' in genero:
-                    genero = genero.replace('Cinema/TV', 'Cinema TV')
-                if '/' in genero:
-                    genero = genero.title()
-                sinopse = lista[0][3].strip()
-                id = lista[0][5]
-                aux = fl.Filme(
-                    id=f'{self.usuario.id}.{id}',
-                    titulo=titulo,
-                    ano=ano,
-                    nota='NÃO ASSISTIDO',
-                    genero=genero.strip(),
-                    extensao=extensao,
-                    cam_filme=self.caminho_filme,
-                    cam_imagem=self.caminho_foto,
-                    sinopse=sinopse.replace("'", '"'))
-                banco_filmes.inserir_dados(self.usuario.id, aux)
-                self.limpar_informacoes()
-                self.id_filme = f'{self.usuario.id}.-1.{len(banco_filmes.ler_dados(usuario_id=self.usuario.id))}'
-            elif len(lista) == 1 and type(lista) == str:
-                mostrar_mensagem(f'O filme: {aux}\nNão foi encontrado na base. Procure seu filme na tela de pesquisa')
-                return ''
-            else:
-                self.botao_slc_arquivo.config(text=self.filmes[indice])
-                self.frame.pack_forget()
-                self.page_ADD_Auxiliar = ADD_Auxiliar(master=self.master, app=self, lista=lista)
-                self.page_ADD_Auxiliar.tela_auxiliar()
-                mostrar_mensagem(f'Vamos adicionar agora o filme:\n{aux}')
-                return ''
+            auxliar_filme = Filme(
+                id=f'{self.usuario.id}.{filme_api.id}',
+                titulo=titulo,
+                ano=ano,
+                nota='NÃO ASSISTIDO',
+                genero=filme_api.genero,
+                extensao=extensao,
+                cam_filme=self.caminho_filme,
+                cam_imagem=self.caminho_foto,
+                sinopse=filme_api.sinopse)
+            banco_filmes.inserir_dados(self.usuario.id, auxliar_filme)
+            self.limpar_informacoes()
+            self.id_filme = f'{self.usuario.id}.-1.{len(banco_filmes.ler_dados(usuario_id=self.usuario.id))}'
+            self.botao_slc_arquivo.config(text=self.caminho_filme)
         else:
             mostrar_mensagem('Todos os filmes foram adicionados','info')
+            tamanho_janela(self.master, 950, 820)
+            frame.pack_forget()
+            self.frame.pack()
 
 class ADD_Auxiliar:
     def __init__(self, master=None, app=None, lista=[]):
+        print(lista)
         self.master = master
         self.app = app
         self.master.title('INFORMAÇÕES')
@@ -1428,7 +1366,7 @@ class ADD_Auxiliar:
             side=LEFT,
             padx=20
         )
-
+        print()
         gerar_botao = Button(
             frame_botao,
             text='ESCOLHER',
@@ -1481,7 +1419,7 @@ class ADD_Auxiliar:
         self.app.tela_add_filmes(filme_escolhido)
 
 class READ_Filme:
-    def __init__(self, master=None, app=None, filme=fl.Filme):
+    def __init__(self, master=None, app=None, filme=Filme):
         self.master = master
         self.app = app
         self.master.title('CONSULTAR FILME')
@@ -1972,12 +1910,12 @@ class UPDATE_Filme:
         arquivos = ['png', 'jpg', 'jfif', 'jpeg']
         arquivo_encontrado = False
         for ext in arquivos:
-            existe_arquivo = fr'{self.pastas[2].caminho_imagem}/{titulo} ({ano}).{ext}'
+            existe_arquivo = fr'{self.pastas.caminho_imagem}/{titulo} ({ano}).{ext}'
             if isfile(existe_arquivo):
                 arquivo_encontrado = True
                 break
         else:
-            existe_arquivo = fr'{self.pastas[2].caminho_imagem}/{titulo} ({ano}).png'
+            existe_arquivo = fr'{self.pastas.caminho_imagem}/{titulo} ({ano}).png'
 
         if arquivo_encontrado and 'http://image.tmdb.org/' in imagem:
             self.photoImg = WebImage(imagem, 350, 150).get()
@@ -2052,7 +1990,7 @@ class UPDATE_Filme:
         if '/' in genero:
             genero = genero.title()
 
-        auxiliar_arquivo = fl.Filme(
+        auxiliar_arquivo = Filme(
             id=self.filme.id,
             titulo=titulo,
             ano=ano,
@@ -2080,9 +2018,9 @@ class UPDATE_Filme:
 
     def selecionar_arquivo(self, tipo_arquivo, title):
         if title == 'Escolha uma imagem':
-            inicio = self.pastas[2].caminho_imagem
+            inicio = self.pastas.caminho_imagem
         else:
-            inicio = self.pastas[2].caminho_filme
+            inicio = self.pastas.caminho_filme
         while True:
             caminho = filedialog.askopenfilename(
                 title=title,
@@ -2112,9 +2050,9 @@ class UPDATE_Filme:
                 mostrar_mensagem('Arquivo de imagem corrompido ou inválido', 'erro')
         else:
             try:
-                tam_caminho_filme = self.pastas[2].caminho_filme
-                if caminho[:len(tam_caminho_filme)] != self.pastas[2].caminho_filme:
-                    mostrar_mensagem(f'Arquivo do filme não está dentro da pasta = {self.pastas[2].caminho_filme}', 'erro')
+                tam_caminho_filme = self.pastas.caminho_filme
+                if caminho[:len(tam_caminho_filme)] != self.pastas.caminho_filme:
+                    mostrar_mensagem(f'Arquivo do filme não está dentro da pasta = {self.pastas.caminho_filme}', 'erro')
                     return ''
                 self.caminho_filme = caminho
                 arquivo = self.caminho_filme.split('/')
@@ -2742,7 +2680,7 @@ class Pesquisar_Filme:
                 return ''
             self.lista_filmes = informacoes3(f'{titulo} ({ano}).amostra', False)
 
-        if len(self.lista_filmes) == 0:
+        if len(self.lista_filmes) == 0 or type(self.lista_filmes) == str:
             mostrar_mensagem('Nenhum filme foi encontrado', 'alerta')
             return ''
         else:
@@ -2751,7 +2689,6 @@ class Pesquisar_Filme:
         self.alterar_eventos()
 
     def alterar_eventos(self):
-        print(self.lista_filmes)
         filme = self.lista_filmes[self.id]
         self.img = WebImage(filme[4], largura=550, altura=300).get()
         self.imagem.config(image=self.img)
@@ -2768,6 +2705,82 @@ class Pesquisar_Filme:
         self.alterar_eventos()
 
     def tela_pesquisar_filme(self):
+        self.frame.pack()
+
+    def ir_tela_inicio(self):
+        self.frame.pack_forget()
+        self.master.title('MENU INICIAL')
+        tamanho_janela(self.master, 1135, 850)
+        self.app.atualiza_filmes(self.app.id,pesquise=False)
+        self.app.tela_inicio()
+
+class Consultar_Usuario:
+    def __init__(self, master=None, app=None):
+        self.master = master
+        self.app = app
+        self.pastas = self.app.app.pasta_usuario
+        self.usuario = self.app.app.usuario
+        self.master.title('MENU DO USUÁRIO')
+        tamanho_janela(self.master, 1130, 850)
+        self.frame = Frame(self.master, bg='#154f91')
+        self.frame.pack()
+
+        frame_foto = Frame(self.frame, bg='#154f91')
+        frame_foto.pack(side=LEFT, fill="both", expand="yes",padx=10)
+
+        im = Image.open(self.usuario.foto)
+        im.thumbnail((140, 100))
+        self.photoImg = ImageTk.PhotoImage(im)
+
+        self.foto_usuario = Button(
+            frame_foto,
+            image=self.photoImg,
+            bg='#334B49',
+            border=5,
+            relief=RIDGE,
+            height=100,
+            width=100,
+            command=self.ir_tela_inicio
+        )
+        self.foto_usuario.pack(anchor=NW,fill="both", expand="yes")
+
+        label_nome = Label(
+            frame_foto,
+            text=self.usuario.nome.title(),
+            fg='white',
+            font=('Arial', 16),
+            bg = '#1A857F',
+            width=10,
+            bd=2,
+            relief=SOLID,
+            wraplength=110
+        )
+        label_nome.pack(fill="both", expand="yes")
+
+        self.botoes = []
+        dicionario_botao = {
+            0: ['ADICIONAR\nFILME',self.logoff],
+            1: ['FILME\nALEATÓRIO', self.logoff],
+            2: ['RECOMENDAÇÃO\nDE FILMES', self.logoff],
+            3: ['PESQUISAR\nFILME', self.logoff],
+            4: ['ORDENAR FILMES\nA-Z', self.logoff]
+        }
+
+        for id in range(4,-1,-1):
+            botao = Button(frame_foto, text=dicionario_botao[id][0], bg='#154f91', fg='white',
+                       font=('Arial', 10), border=15, command=dicionario_botao[id][1], relief=RAISED)
+            self.botoes.append(botao)
+            botao.pack(pady=30, side=BOTTOM, anchor=S, fill="both", expand="yes")
+
+    def logoff(self):
+        resposta = perguntar('AVISO','Você tem certeza que deseja fazer logoff?')
+        if resposta:
+            self.master.title('LOGIN')
+            tamanho_janela(self.master, 700, 300)
+            self.frame.pack_forget()
+            self.app.app.tela_login()
+
+    def tela_consultar_usuario(self):
         self.frame.pack()
 
     def ir_tela_inicio(self):

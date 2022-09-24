@@ -1,8 +1,7 @@
 class Filme:
-    def __init__(self, id, titulo: str, ano: int, nota: str, genero: str,
-                 extensao: str, cam_filme: str, cam_imagem: str, sinopse: str, valor:int=0):
+    def __init__(self, id: str, titulo: str, ano: int, nota: str, genero: str, extensao: str, cam_filme: str, cam_imagem: str, sinopse: str, valor:int=0):
         self.__id = id #vai ser o id na API TMDB, se não encontrar vai ser -1.len(banco_filmes)
-        self.__titulo = titulo
+        self.__titulo = titulo.title()
         self.__ano = ano
         self.__nota = nota
         self.__genero = genero
@@ -52,7 +51,15 @@ class Filme:
 
     @genero.setter
     def genero(self, novo_genero):
-        self.__genero = novo_genero.title()
+        self.__genero = novo_genero
+
+    def tratar_genero(self):
+        genero = ''.join(char.replace(char, '/') if not char.isalnum() and not '/' == char else char for char in self.__genero)
+        if 'Ficção/Científica' in genero:
+            genero = genero.replace('Ficção/Científica', 'Ficção Científica')
+        if 'Cinema/TV' in genero:
+            genero = genero.replace('Cinema/TV', 'Cinema TV')
+        self.__genero = genero
 
     @property
     def extensao(self):
@@ -92,3 +99,12 @@ class Filme:
     @sinopse.setter
     def sinopse(self, nova_sinopse):
         self.__sinopse = nova_sinopse
+
+    def tratar_sinopse(self):
+        self.__sinopse.strip()
+        self.__sinopse.replace("'", '"')
+
+    def tratar_dados(self):
+
+        self.tratar_genero()
+        self.tratar_sinopse()

@@ -21,8 +21,13 @@ class FilmeDAO:
         return self.__cursor
 
     def inserir_dados(self, usuario_id, filme=Filme):
-        self.__cursor.execute(f"INSERT INTO filmes VALUES('{filme.id}',{usuario_id},'{filme.titulo}',{filme.ano},'{filme.nota}','{filme.genero}','{filme.extensao}','{filme.cam_filme}','{filme.cam_imagem}',{filme.assistido},'{filme.sinopse}')")
-        self.__banco_conectado.commit()
+        try:
+            self.__cursor.execute(f"INSERT INTO filmes VALUES('{filme.id}',{usuario_id},'{filme.titulo}',{filme.ano},'{filme.nota}','{filme.genero}','{filme.extensao}','{filme.cam_filme}','{filme.cam_imagem}',{filme.assistido},'{filme.sinopse}')")
+            self.__banco_conectado.commit()
+        except Exception as e:
+            print(f"INSERT INTO filmes VALUES('{filme.id}',{usuario_id},'{filme.titulo}',{filme.ano},'{filme.nota}','{filme.genero}','{filme.extensao}','{filme.cam_filme}','{filme.cam_imagem}',{filme.assistido},'{filme.sinopse}')")
+            print(e)
+            exit()
 
     def ler_dados(self, usuario_id):
         lista = []

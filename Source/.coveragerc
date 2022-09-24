@@ -1,0 +1,16 @@
+[run]
+
+[report]
+exclude_lines =
+    def __str__
+    def __init__
+    def __len__
+    def __getitem__
+    def __eq__
+    @property
+    @?.setter
+    if ambiente == 'PRD'
+    @fixture
+
+[html]
+directory = coverage_relatorio_html

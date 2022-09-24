@@ -1,12 +1,12 @@
+from BACK_END.UsuarioDAO import UsuarioDAO
+from BACK_END.PastasDAO import PastaDAO
+from BACK_END.FilmeDAO import FilmeDAO
+from BACK_END.Pastas import Pasta
 from os import listdir, walk
 from os.path import join, realpath
-import BACK_END.PastasDAO as ptdao
-import BACK_END.FilmeDAO as fldao
-import BACK_END.Filme as fl
-from tkinter.messagebox import showinfo, showwarning, askquestion, showerror, askyesno
-from tkinter import filedialog
-from BACK_END.ControleDeUsuario import *
 import re
+from tkinter.messagebox import showinfo, showwarning, askquestion, showerror, askyesno
+from tkinter import filedialog, Tk
 
 def mostrar_mensagem(mensagem,tipo='info'):
     if tipo == 'info':
@@ -33,29 +33,11 @@ def mostrar_mensagem(mensagem,tipo='info'):
 def perguntar(titulo,mensagem):
     return askyesno(titulo, mensagem)
 
-def selecionar_arquivo(filetypes=''):
-    filetypes = (("jpg files", "*.jpg"), ("jpeg files", "*.jpeg"), ("jfif files", "*.jfif"), ("png files", "*.png"))
-    filename = filedialog.askopenfilename(
-        title='Escolha o Arquivo',
-        filetypes=filetypes,
-        initialdir='/')
-    if filename == '':
-        return False
-    else:
-        return filename
-
-def listar_caminho_arquivo(caminho_filme, filme):
-    for diretorio, subpastas, arquivos in walk(caminho_filme):
-        for arquivo in arquivos:
-            if filme == arquivo:
-                return join(realpath(diretorio), arquivo)
-    return 'erro'
-
 def verificar_arquivos(caminho):
     aux_lista = []
     for diretorio, subpastas, arquivos in walk(caminho):
         for arquivo in arquivos:
-            aux_lista.append(f'{diretorio}/{arquivo}')
+            aux_lista.append(fr'{diretorio}/{arquivo}')
     return aux_lista
 
 def formata_string(texto):
@@ -76,11 +58,11 @@ def escolher_diretorio(title):
     if diretorio == '':
         return False
     else:
-        mostrar_mensagem(diretorio, 'Diretório Escolhido')
+        mostrar_mensagem(f'Pasta = {diretorio}', 'Diretório Escolhido')
 
     return diretorio
 
-def verifica_caminho_imagens(caminho):
+def verifica_caminho_imagens(caminho: Pasta):
     lista_imagem = [imagem[:formata_string(imagem) - len(imagem)] for imagem in verificar_arquivos(caminho.caminho_imagem)]
     for imagem in lista_imagem:
         busca = re.search(r'[a-zA-Zà-úÁ-Úà-ùÀ-Ù\d\Wº]+[\s]{1}[(][\d]{4}[)]', imagem)
@@ -94,7 +76,7 @@ def verifica_caminho_imagens(caminho):
             mostrar_mensagem(mensagem)
             exit()
 
-def verifica_caminho_filmes(caminho):
+def verifica_caminho_filmes(caminho: Pasta):
     lista_filme = [filme[:formata_string(filme) - len(filme)] for filme in verificar_arquivos(caminho.caminho_filme)]
     for filme in lista_filme:
         busca = re.search(r'[a-zA-Zà-úÁ-Úà-ùÀ-Ù\d\Wº]+[\s]{1}[(][\d]{4}[)]', filme)
@@ -108,25 +90,10 @@ def verifica_caminho_filmes(caminho):
             mostrar_mensagem(mensagem)
             exit()
 
-caminho = cdu.pastas
-banco_pastas = ptdao.PastaDAO(caminho.caminho_banco)
-if not banco_pastas.conferir_banco():
-    mensagem = f'Contate o desenvolvedor no número (11) 96985-8000'
-    showwarning(
-        title='ATENÇÃO',
-        message=mensagem
-    )
-    exit()
-lista_pastas = banco_pastas.ler_dados()
-banco_filmes = fldao.FilmeDAO(caminho.caminho_banco)
-banco_usuarios = cdu.banco_usuarios
-
 def criar_pastas():
-    caminhos = []
     while True:
         cam_filme = escolher_diretorio('Escolha o diretório dos filmes')
         if cam_filme != False:
-            caminhos.append(cam_filme)
             break
         else:
             resposta = perguntar("AVISO", "Você quer continuar?")
@@ -137,20 +104,17 @@ def criar_pastas():
     while True:
         cam_imagem = escolher_diretorio('Escolha o diretório das imagens')
         if cam_imagem != False:
-            caminhos.append(cam_imagem)
             break
         else:
             resposta = perguntar("AVISO", "Você quer continuar?")
             if not resposta:
                 mostrar_mensagem('Até a próxima')
                 exit()
-    return caminhos[0],caminhos[1]
+    return cam_filme, cam_imagem
 
-def verificar_pastas(caminho):
-    alteracao = False
+def verificar_pastas(caminho: Pasta):
     try:
         listdir(caminho.caminho_filme)
-        alteracao = perguntar('AVISO','Deseja alterar seu diretório dos filmes?')
     except:
         while True:
             cam_filme = escolher_diretorio('Escolha o diretório dos filmes')
@@ -163,26 +127,8 @@ def verificar_pastas(caminho):
                     mostrar_mensagem('Até a próxima')
                     exit()
 
-    if alteracao:
-        while True:
-            cam_filme = escolher_diretorio('Escolha o diretório dos filmes')
-            if cam_filme != False:
-                caminho.caminho_filme = cam_filme
-                break
-            else:
-                resposta = perguntar("AVISO", "Deseja sair do aplicativo?")
-                if resposta:
-                    mostrar_mensagem('Até a próxima')
-                    exit()
-                else:
-                    resposta = perguntar("AVISO", "Deseja manter o diretório antigo?")
-                    if resposta:
-                        break
-
-    alteracao = False
     try:
         listdir(caminho.caminho_imagem)
-        alteracao = perguntar('AVISO', 'Deseja alterar seu diretório dos filmes?')
     except:
         while True:
             cam_imagem = escolher_diretorio('Escolha o diretório das imagens')
@@ -195,21 +141,17 @@ def verificar_pastas(caminho):
                     mostrar_mensagem('Até a próxima')
                     exit()
 
-
-    if alteracao:
-        while True:
-            alteracao = True
-            cam_imagem = escolher_diretorio('Escolha o diretório das imagens')
-            if cam_imagem != False:
-                caminho.caminho_imagem = cam_imagem
-                break
-            else:
-                resposta = perguntar("AVISO", "Deseja sair do aplicativo?")
-                if resposta:
-                    mostrar_mensagem('Até a próxima')
-                    exit()
-                else:
-                    resposta = perguntar("AVISO", "Deseja manter o diretório antigo?")
-                    if resposta:
-                        break
     return caminho
+
+root = Tk()
+banco_usuarios = UsuarioDAO('banco.db')
+if not banco_usuarios.validar_estrutura_banco():
+    mensagem = f'Contate o desenvolvedor no número (11) 96985-8000'
+    showwarning(
+        title='ATENÇÃO',
+        message=mensagem
+    )
+    exit()
+banco_pastas = PastaDAO(banco_usuarios.banco)
+banco_filmes = FilmeDAO(banco_usuarios.banco)
+
