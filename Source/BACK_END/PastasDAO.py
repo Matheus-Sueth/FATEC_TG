@@ -1,92 +1,76 @@
-import sqlite3 as sql
-from BACK_END.Pastas import Pasta
-from BACK_END.Colecao import Colecao
-from BACK_END.UsuarioDAO import Usuario
+from Source.BACK_END.Pastas import Pasta
+from Source.BACK_END.UsuarioDAO import Usuario
+from Source.BACK_END.Banco import Banco
 
-class PastaDAO:
-    def __init__(self,banco):
-        self.__banco = banco
-        self.__banco_conectado = sql.connect(self.__banco)
-        self.__cursor = self.__banco_conectado.cursor()
+class PastaDAO(Banco):
+    def __init__(self, banco):
+        super().__init__(banco)
 
-    @property
-    def banco(self):
-        return self.__banco
-
-    @banco.setter
-    def banco(self, novo_banco):
-        self.__banco = novo_banco
-
-    @property
-    def cursor(self):
-        return self.__cursor
-
-    def validar_pastas(self, pasta: Pasta, ambiente: str):
+    def validar_pastas(self, pasta:Pasta):
         if not pasta.validar_caminho_imagem():
-            if ambiente == 'PRD':
-                return False
             raise Exception('Diretório de imagens não foi encontrado')
 
         if not pasta.validar_caminho_filme():
-            if ambiente == 'PRD':
-                return False
             raise Exception('Diretório de filmes não foi encontrado')
         return True
 
-    def inserir_pastas(self, pasta:Pasta, usuario:Usuario, ambiente='PRD'):
-        auxiliar = self.validar_pastas(pasta, ambiente)
-        if ambiente == 'PRD' and not auxiliar:
-            return False
-        self.__cursor.execute(f'SELECT * FROM pastas WHERE usuario_id == {usuario.id}')
-        result = self.__cursor.fetchall()
+    def verificar_pasta_imagem(self, pasta:Pasta):
+        self.cursor.execute(f'SELECT * FROM pastas WHERE imagem == {pasta.caminho_imagem}')
+        result = self.cursor.fetchall()
+        if len(result) != 0:
+            raise Exception(f'Essa pasta de imagem já existe no banco de dados')
+        return True
+
+    def inserir_pastas(self, pasta:Pasta, usuario:Usuario):
+        try:
+            auxiliar = self.validar_pastas(pasta)
+        except Exception as erro:
+            raise Exception(erro)
+        self.cursor.execute(f'SELECT * FROM pastas WHERE usuario_id == {usuario.id}')
+        result = self.cursor.fetchall()
         if len(result) > 0:
-            if ambiente == 'PRD':
-                return False
             raise Exception(f'O usuário {usuario.nome} já possui pastas cadastradas')
-        self.__cursor.execute(
+        try:
+            auxiliar = self.verificar_pasta_imagem(pasta)
+        except Exception as erro:
+            raise Exception(erro)
+        self.cursor.execute(
             f'INSERT INTO pastas (usuario_id,filme,imagem,banco) VALUES("{pasta.usuario_id}","{pasta.caminho_filme}","{pasta.caminho_imagem}","{pasta.caminho_banco}")')
-        if ambiente == 'PRD':
-            self.__banco_conectado.commit()
+        self.banco_conectado.commit()
         return True
 
-    def ler_pastas_usuario(self, usuario:Usuario, ambiente='PRD'):
-        self.__cursor.execute(f'SELECT * FROM pastas WHERE usuario_id == {usuario.id}')
-        result = self.__cursor.fetchall()[0]
+    def ler_pastas_usuario(self, usuario:Usuario):
+        self.cursor.execute(f'SELECT * FROM pastas WHERE usuario_id == {usuario.id}')
+        result = self.cursor.fetchall()
         if len(result) == 0:
-            if ambiente == 'PRD':
-                return False
             raise Exception(f'Nenhuma pasta foi encontrada para o usuário {usuario.nome}')
-        return Pasta(result[0],result[1],result[2],result[3],result[4])
+        dados = result[0]
+        return Pasta(dados[0],dados[1],dados[2],dados[3],dados[4])
 
-    def alterar_pastas(self, pasta_antiga: Pasta, pasta_alterada: Pasta, usuario:Usuario, ambiente='PRD'):
-        auxiliar = self.validar_pastas(pasta_antiga, ambiente)
-        if ambiente == 'PRD' and not auxiliar:
-            return False
-        auxiliar = self.validar_pastas(pasta_alterada, ambiente)
-        if ambiente == 'PRD' and not auxiliar:
-            return False
-        auxiliar = self.ler_pastas_usuario(usuario, ambiente)
-        if type(auxiliar) != Pasta:
-            if ambiente == 'PRD':
-                return False
-            raise Exception(f'Nem a pasta nem o usuário {usuario.nome} foram encontrados')
-        self.__cursor.execute(
+    def alterar_pastas(self, pasta_antiga:Pasta, pasta_alterada:Pasta, usuario:Usuario):
+        try:
+            auxiliar = self.validar_pastas(pasta_antiga)
+            auxiliar = self.validar_pastas(pasta_alterada)
+        except Exception as erro:
+            raise Exception(erro)
+        try:
+            auxiliar = self.ler_pastas_usuario(usuario, ambiente)
+        except Exception as erro:
+            raise Exception(erro)
+        self.cursor.execute(
             f"UPDATE usuario SET usuario_id = '{pasta_alterada.usuario_id}', filme = '{pasta_alterada.filme}', imagem = '{pasta_alterada.imagem}', banco = '{pasta_alterada.banco}' WHERE id = {pasta_antiga.id}")
-        if ambiente == 'PRD':
-            self.__banco_conectado.commit()
+        self.banco_conectado.commit()
         return True
 
-    def deletar_pastas(self, pasta:Pasta, usuario:Usuario, ambiente='PRD'):
-        auxiliar = self.validar_pastas(pasta, ambiente)
-        if ambiente == 'PRD' and not auxiliar:
-            return False
-        auxiliar = self.ler_pastas_usuario(usuario, ambiente)
-        if type(auxiliar) != Pasta:
-            if ambiente == 'PRD':
-                return False
-            raise Exception(f'Nem a pasta nem o usuário {usuario.nome} foram encontrados')
-        self.__cursor.execute(
-            f'DELETE FROM pastas WHERE id = {pasta.id}')
-        if ambiente == 'PRD':
-            self.__banco_conectado.commit()
+    def deletar_pastas(self, pasta:Pasta, usuario:Usuario):
+        try:
+            auxiliar = self.validar_pastas(pasta)
+        except Exception as erro:
+            raise Exception(erro)
+        try:
+            auxiliar = self.ler_pastas_usuario(usuario, ambiente)
+        except Exception as erro:
+            raise Exception(erro)
+        self.cursor.execute(f'DELETE FROM pastas WHERE id = {pasta.id}')
+        self.banco_conectado.commit()
         return True

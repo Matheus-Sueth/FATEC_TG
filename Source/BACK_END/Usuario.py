@@ -11,7 +11,6 @@ class Usuario:
         self.__foto = foto
 
     def __str__(self):
-        print(self.__id, self.__nome, self.__senha)
         return f'Olá, {self.__nome}'
 
     def __eq__(self, other):

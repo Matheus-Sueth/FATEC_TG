@@ -2,8 +2,8 @@ import requests
 import json
 import unidecode
 from os import walk
-from BACK_END.FilmeWEB import FilmeWEB
-from BACK_END.Colecao import Colecao
+from Source.BACK_END.FilmeWEB import FilmeWEB
+from Source.BACK_END.Colecao import Colecao
 
 def procurar_filme_api(arquivo,ano=True):
     API_KEY = '9ccf9fd2aaa2811eabe3d8060d4b6e9f'

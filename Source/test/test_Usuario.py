@@ -1,6 +1,5 @@
-from BACK_END.ControleDeTela import *
-from BACK_END.Usuario import Usuario
-from BACK_END.PastasDAO import Colecao
+from Source.test.db_demo import banco_usuarios
+from Source.BACK_END.Usuario import Usuario
 from pytest import raises, mark, fixture
 
 ambiente = 'HMG'
@@ -8,12 +7,12 @@ ambiente = 'HMG'
 @fixture
 def usuario_valido_fora_bd_create_user_success():
    '''Retorna um usuário válido que não está no banco de dados para ser usado no create_user_success'''
-   return Usuario(3, 'Fanta Uva', 'fanta.uva@yahoo.com', 'uvamais2l', r'E:/2020-02-20.jpg')
+   return Usuario(1, 'Marcelo', 'marcelo@yahoo.com', 'marcelo123', r'E:/2020-02-20.jpg')
 
 @fixture
 def usuario_valido_dentro_bd_create_user_failure_user_existing():
    '''Retorna um usuário válido que está no banco de dados para sr usado no create_user_failure_user_existing'''
-   return Usuario(1, 'Matheus', 'matheus@gmail.com', '1234', 'E:/2020-02-20.jpg')
+   return Usuario(1, 'José', 'jose@gmail.com', 'teste', 'E:/2020-02-20.jpg')
 
 @fixture
 def usuario_valido_dentro_bd_login_user_success():
@@ -118,8 +117,9 @@ class TestClassUsuario:
 
       @mark.create_user_failure_user_existing
       def test_quando_programa_cria_usuario_recebe_dados_usuario_deve_retornar_exception_user_existing(self, usuario_valido_dentro_bd_create_user_failure_user_existing):
-         with raises(Exception):
-            assert banco_usuarios.inserir_dados(usuario_valido_dentro_bd_create_user_failure_user_existing, ambiente)
+         with raises(Exception) as erro:
+            banco_usuarios.inserir_dados(usuario_valido_dentro_bd_create_user_failure_user_existing, ambiente)
+            assert 'Usuário foi encontrado no sistema, a criação de usuário foi cancelada' == str(erro.value)
 
    @mark.login_user
    class TestClassUsuarioLogin:
@@ -129,8 +129,9 @@ class TestClassUsuario:
 
       @mark.login_user_failure
       def test_quando_programa_tenta_logar_recebe_dados_usuario_deve_retornar_exception_usuario(self, usuario_valido_fora_bd_login_user_failure):
-         with raises(Exception):
-            assert banco_usuarios.ler_dados_usuario(usuario_valido_fora_bd_login_user_failure, ambiente)
+         with raises(Exception) as erro:
+            banco_usuarios.ler_dados_usuario(usuario_valido_fora_bd_login_user_failure, ambiente)
+            assert 'Nenhum usuário foi encontrado no sistema' == str(erro.value)
 
    @mark.read_user
    class TestClassUsuarioRead:

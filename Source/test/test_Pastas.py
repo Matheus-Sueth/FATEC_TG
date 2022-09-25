@@ -1,12 +1,12 @@
-from BACK_END.ControleDeTela import *
-from BACK_END.Pastas import Pasta
-from BACK_END.PastasDAO import Colecao
-from BACK_END.Usuario import Usuario
+from Source.BACK_END.ControleDeTela import *
+from Source.BACK_END.Pastas import Pasta
+from Source.BACK_END.PastasDAO import Colecao
+from Source.BACK_END.Usuario import Usuario
 from pytest import raises, mark, fixture
 from os.path import isfile
-import __init__ as init
+from Source.test.db_demo import banco_pastas
 
-ambiente = 'HMG'
+ambiente='HMG'
 
 @fixture
 def usuario_dentro_bd():

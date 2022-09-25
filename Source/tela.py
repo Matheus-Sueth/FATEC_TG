@@ -2,13 +2,13 @@ from tkinter import *
 from tkinter.ttk import Combobox, Progressbar
 from PIL import ImageTk
 from PIL import Image
-from BACK_END.ControleDeTela import *
-from BACK_END.Usuario import Usuario
-from BACK_END.PastasDAO import PastaDAO
-from BACK_END.Pastas import Pasta
-from BACK_END.Filme import Filme
-from BACK_END.Colecao import Colecao
-from BACK_END.RecomendaFilme import *
+from Source.BACK_END.ControleDeTela import *
+from Source.BACK_END.Usuario import Usuario
+from Source.BACK_END.PastasDAO import PastaDAO
+from Source.BACK_END.Pastas import Pasta
+from Source.BACK_END.Filme import Filme
+from Source.BACK_END.Colecao import Colecao
+from Source.BACK_END.RecomendaFilme import *
 import urllib.request
 import io
 import re
@@ -235,7 +235,7 @@ class Login:
             self.indice = resultado.id
             pasta_usuario = banco_pastas.ler_pastas_usuario(self.usuario)
             if type(pasta_usuario) != Pasta:
-                mostrar_mensagem(f'Nenhuma pasta foi encontrada para o usuário {usuario.nome}. Então nós iremos procurar os diretórios de imagem e de filme', 'aviso')
+                mostrar_mensagem(f'Nenhuma pasta foi encontrada para o usuário {self.usuario.nome}. Então nós iremos procurar os diretórios de imagem e de filme', 'aviso')
                 self.pasta_usuario = Pasta(0,self.usuario.id,'','',banco_usuarios.banco)
                 self.pasta_usuario.caminho_filme, self.pasta_usuario.validar_caminho_imagem = criar_pastas()
                 banco_pastas.inserir_dados(self.pasta_usuario)
@@ -1181,7 +1181,7 @@ class ADD_Filme:
             filme_api = lista[0]
 
             if filme_api.verificar_null():
-
+                pass
 
             if filme_api.ano != ano:
                 mostrar_mensagem(f'O filme: {auxliar_filme} está com o ano errado no arquivo.\nAltere para {filme_api.titulo} ({filme_api.ano}){extensao}')

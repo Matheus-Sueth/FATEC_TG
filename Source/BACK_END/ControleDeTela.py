@@ -1,7 +1,7 @@
-from BACK_END.UsuarioDAO import UsuarioDAO
-from BACK_END.PastasDAO import PastaDAO
-from BACK_END.FilmeDAO import FilmeDAO
-from BACK_END.Pastas import Pasta
+from Source.BACK_END.UsuarioDAO import UsuarioDAO
+from Source.BACK_END.PastasDAO import PastaDAO
+from Source.BACK_END.FilmeDAO import FilmeDAO
+from Source.BACK_END.Pastas import Pasta
 from os import listdir, walk
 from os.path import join, realpath
 import re

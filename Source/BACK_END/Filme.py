@@ -105,6 +105,5 @@ class Filme:
         self.__sinopse.replace("'", '"')
 
     def tratar_dados(self):
-
         self.tratar_genero()
         self.tratar_sinopse()
