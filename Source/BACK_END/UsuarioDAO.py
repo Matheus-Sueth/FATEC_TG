@@ -71,6 +71,10 @@ class UsuarioDAO(Banco):
         return True
 
     def deletar_dados(self, usuario: Usuario):
+        try:
+            auxiliar = self.validar_dados_usuario(usuario)
+        except Exception as erro:
+            raise Exception(erro)
         self.cursor.execute(f'SELECT * FROM usuario WHERE email == "{usuario.email}"')
         usuario_login = self.cursor.fetchall()
         if len(usuario_login) == 0:

@@ -9,7 +9,6 @@ exclude_lines =
     def __eq__
     @property
     @?.setter
-    if ambiente == 'PRD'
     @fixture
 
 [html]
