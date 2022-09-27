@@ -5,6 +5,7 @@ import base64
 class UsuarioDAO(Banco):
     def __init__(self, banco):
         super().__init__(banco)
+        selfbanco_conectado = self.banco
 
     def validar_dados_usuario(self,novo_usuario):
         if not novo_usuario.eh_nome_valido():
@@ -32,7 +33,7 @@ class UsuarioDAO(Banco):
         encoded = (base64.b64encode(novo_usuario.senha.encode('ascii')))
         novo_usuario.senha = encoded.decode('ascii')
         self.cursor.execute(f'INSERT INTO usuario (nome,email,senha,foto) VALUES("{novo_usuario.nome}","{novo_usuario.email}","{novo_usuario.senha}","{novo_usuario.foto}")')
-        self.banco_conectado.commit()
+        self.salvar_dados()
         return True
 
     def ler_dados_usuario(self, usuario: Usuario):
@@ -49,7 +50,7 @@ class UsuarioDAO(Banco):
         usuario_login[3] = decoded.decode('ascii')
         return Usuario(usuario_login[0],usuario_login[1],usuario_login[2],usuario_login[3],usuario_login[4])
 
-    def alterar_dados(self, usuario_antigo: Usuario, usuario_alterado: Usuario, ambiente='PRD'):
+    def alterar_dados(self, usuario_antigo: Usuario, usuario_alterado: Usuario):
         try:
             auxiliar = self.validar_dados_usuario(usuario_alterado)
         except Exception as erro:
@@ -66,7 +67,7 @@ class UsuarioDAO(Banco):
         usuario_alterado.senha = encoded.decode('ascii')
         self.cursor.execute(
             f"UPDATE usuario SET nome = '{usuario_alterado.nome}', email = '{usuario_alterado.email}', senha = '{usuario_alterado.senha}', foto = '{usuario_alterado.foto}' WHERE id = {usuario_antigo.id}")
-        self.banco_conectado.commit()
+        self.salvar_dados()
         return True
 
     def deletar_dados(self, usuario: Usuario):
@@ -75,6 +76,6 @@ class UsuarioDAO(Banco):
         if len(usuario_login) == 0:
             raise Exception('Nenhum usuário foi encontrado no sistema')
         self.cursor.execute(
-            f'DELETE FROM usuario WHERE id={usuario.id}')
-        self.banco_conectado.commit()
+            f'DELETE FROM usuario WHERE email == "{usuario.email}"')
+        self.salvar_dados()
         return True

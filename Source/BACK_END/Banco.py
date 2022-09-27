@@ -27,6 +27,9 @@ class Banco:
     def cursor(self):
         return self.__cursor
 
+    def salvar_dados(self):
+        self.__banco_conectado.commit()
+
     def validar_estrutura_banco(self):
         colunas = {'usuario':('id','nome','email','senha','foto'),
                    'pastas':('id', 'usuario_id', 'filme', 'imagem', 'banco'),

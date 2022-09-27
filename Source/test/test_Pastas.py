@@ -1,6 +1,6 @@
 from Source.BACK_END.ControleDeTela import *
 from Source.BACK_END.Pastas import Pasta
-from Source.BACK_END.PastasDAO import Colecao
+from Source.BACK_END.Colecao import Colecao
 from Source.BACK_END.Usuario import Usuario
 from pytest import raises, mark, fixture
 from os.path import isfile
