@@ -33,8 +33,7 @@ class UsuarioDAO(Banco):
         encoded = (base64.b64encode(novo_usuario.senha.encode('ascii')))
         novo_usuario.senha = encoded.decode('ascii')
         self.cursor.execute(f'INSERT INTO usuario (nome,email,senha,foto) VALUES("{novo_usuario.nome}","{novo_usuario.email}","{novo_usuario.senha}","{novo_usuario.foto}")')
-        self.salvar_dados()
-        return True
+        return self.salvar_dados()
 
     def ler_dados_usuario(self, usuario: Usuario):
         try:
@@ -67,8 +66,7 @@ class UsuarioDAO(Banco):
         usuario_alterado.senha = encoded.decode('ascii')
         self.cursor.execute(
             f"UPDATE usuario SET nome = '{usuario_alterado.nome}', email = '{usuario_alterado.email}', senha = '{usuario_alterado.senha}', foto = '{usuario_alterado.foto}' WHERE id = {usuario_antigo.id}")
-        self.salvar_dados()
-        return True
+        return self.salvar_dados()
 
     def deletar_dados(self, usuario: Usuario):
         try:
@@ -81,5 +79,4 @@ class UsuarioDAO(Banco):
             raise Exception('Nenhum usuário foi encontrado no sistema')
         self.cursor.execute(
             f'DELETE FROM usuario WHERE email == "{usuario.email}"')
-        self.salvar_dados()
-        return True
+        return self.salvar_dados()

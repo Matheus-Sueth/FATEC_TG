@@ -51,7 +51,7 @@ class TestClassUsuario:
       def test_quando_programa_valida_dados_recebe_dados_usuario_deve_retornar_exception_nome(self, usuario):
          with raises(Exception) as erro:
             banco_usuarios.validar_dados_usuario(usuario)
-            assert 'O nome não condiz com a diretrizes do sistema' == str(erro.value)
+         assert 'O nome não condiz com a diretrizes do sistema' in str(erro.value)
 
       @mark.data_validation_failure_foto
       @mark.parametrize("usuario", [
@@ -62,7 +62,7 @@ class TestClassUsuario:
       def test_quando_programa_valida_dados_recebe_dados_usuario_deve_retornar_exception_foto(self, usuario):
          with raises(Exception) as erro:
             banco_usuarios.validar_dados_usuario(usuario)
-            assert 'O email não condiz com a diretrizes do sistema' == str(erro.value)
+         assert 'A foto não condiz com a diretrizes do sistema' in str(erro.value)
 
       @mark.data_validation_failure_email
       @mark.parametrize("usuario", [
@@ -73,7 +73,7 @@ class TestClassUsuario:
       def test_quando_programa_valida_dados_recebe_dados_usuario_deve_retornar_exception_email(self, usuario):
          with raises(Exception) as erro:
             banco_usuarios.validar_dados_usuario(usuario)
-            assert 'A senha não condiz com a diretrizes do sistema' == str(erro.value)
+         assert 'O email não condiz com a diretrizes do sistema' in str(erro.value)
 
       @mark.data_validation_failure_senha
       @mark.parametrize("usuario", [
@@ -84,7 +84,7 @@ class TestClassUsuario:
       def test_quando_programa_valida_dados_recebe_dados_usuario_deve_retornar_exception_senha(self, usuario):
          with raises(Exception) as erro:
             banco_usuarios.validar_dados_usuario(usuario)
-            assert 'A foto não condiz com a diretrizes do sistema' == str(erro.value)
+         assert 'A senha não condiz com a diretrizes do sistema' in str(erro.value)
 
    @mark.create_user
    class TestClassUsuarioCreate:
@@ -93,16 +93,16 @@ class TestClassUsuario:
          assert banco_usuarios.inserir_dados(usuario_valido_fora_bd)
 
       @mark.create_user_failure_user_existing
-      def test_quando_programa_cria_usuario_recebe_dados_usuario_deve_retornar_exception_usuario_existing(self, usuario_valido_dentro_bd):
+      def test_quando_programa_cria_usuario_recebe_dados_usuario_deve_retornar_exception_usuario_existe(self, usuario_valido_dentro_bd):
          with raises(Exception) as erro:
             banco_usuarios.inserir_dados(usuario_valido_dentro_bd)
-            assert 'Usuário foi encontrado no sistema, a criação de usuário foi cancelada' == str(erro.value)
+         assert f'Usuário com o email: {usuario_valido_dentro_bd.email} foi encontrado no sistema, a criação de usuário foi cancelada' in str(erro.value)
 
       @mark.create_user_failure_data_validation
       def test_quando_programa_cria_usuario_recebe_dados_usuario_deve_retornar_exception_usuario_nome(self):
          with raises(Exception) as erro:
             banco_usuarios.inserir_dados(Usuario(0, '', 'usuario.teste@gmail.com', 'usuario@1234', r'E:/2020-02-20.jpg'))
-            assert 'O nome não condiz com a diretrizes do sistema' == str(erro.value)
+         assert 'O nome não condiz com a diretrizes do sistema' in str(erro.value)
 
    @mark.login_user
    class TestClassUsuarioLogin:
@@ -114,13 +114,13 @@ class TestClassUsuario:
       def test_quando_programa_tenta_logar_recebe_dados_usuario_deve_retornar_exception_usuario(self, usuario_valido_fora_bd2):
          with raises(Exception) as erro:
             banco_usuarios.ler_dados_usuario(usuario_valido_fora_bd2)
-            assert 'Nenhum usuário foi encontrado no sistema' == str(erro.value)
+         assert 'Nenhum usuário foi encontrado no sistema' in str(erro.value)
 
       @mark.login_user_failure_data_validation
       def test_quando_programa_tenta_logar_recebe_dados_usuario_deve_retornar_exception_usuario_nome(self):
          with raises(Exception) as erro:
             banco_usuarios.ler_dados_usuario(Usuario(0, '', 'usuario.teste@gmail.com', 'usuario@1234', r'E:/2020-02-20.jpg'))
-            assert 'O nome não condiz com a diretrizes do sistema' == str(erro.value)
+         assert 'O nome não condiz com a diretrizes do sistema' in str(erro.value)
 
    @mark.update_user
    class TestClassUsuarioUpdate:
@@ -136,19 +136,19 @@ class TestClassUsuario:
       def test_quando_programa_altera_usuario_recebe_dados_usuario_retornar_exception_usuario_nao_existe(self, usuario_valido_fora_bd2, usuario_valido_fora_bd3):
          with raises(Exception) as erro:
             banco_usuarios.alterar_dados(usuario_valido_fora_bd2, usuario_valido_fora_bd3)
-            assert 'Nenhum usuário foi encontrado no sistema' == str(erro.value)
+         assert 'Nenhum usuário foi encontrado no sistema' in str(erro.value)
 
       @mark.update_user_failure_user_existing
       def test_quando_programa_altera_usuario_recebe_dados_usuario_retornar_exception_outro_usuario_exite(self, usuario_valido_dentro_bd, usuario_valido_dentro_bd2):
          with raises(Exception) as erro:
             banco_usuarios.alterar_dados(usuario_valido_dentro_bd, usuario_valido_dentro_bd2)
-            assert 'E-mail já está cadastrado no sistema' == str(erro.value)
+         assert 'E-mail já está cadastrado no sistema' in str(erro.value)
 
       @mark.update_user_failure_data_validation
       def test_quando_programa_altera_usuario_recebe_dados_usuario_retornar_exception_outro_usuario_nome(self, usuario_valido_dentro_bd):
          with raises(Exception) as erro:
             banco_usuarios.alterar_dados(usuario_valido_dentro_bd, Usuario(0, '', 'usuario.teste@gmail.com', 'usuario@1234', r'E:/2020-02-20.jpg'))
-            assert 'O nome não condiz com a diretrizes do sistema' == str(erro.value)
+         assert 'O nome não condiz com a diretrizes do sistema' in str(erro.value)
 
    @mark.delete_user
    class TestClassUsuarioDelete:
@@ -160,10 +160,10 @@ class TestClassUsuario:
       def test_quando_programa_deleta_usuario_recebe_dados_usuario_deve_retornar_exception(self, usuario_valido_fora_bd2):
          with raises(Exception) as erro:
             banco_usuarios.deletar_dados(usuario_valido_fora_bd2)
-            assert 'Nenhum usuário foi encontrado no sistema' == str(erro.value)
+         assert 'Nenhum usuário foi encontrado no sistema' in str(erro.value)
 
       @mark.delete_user_failure_data_validation
       def test_quando_programa_deleta_usuario_recebe_dados_usuario_deve_retornar_exception_usuario_nome(self):
          with raises(Exception) as erro:
             banco_usuarios.deletar_dados(Usuario(0, '', 'usuario.teste@gmail.com', 'usuario@1234', r'E:/2020-02-20.jpg'))
-            assert 'O nome não condiz com a diretrizes do sistema' == str(erro.value)
+         assert 'O nome não condiz com a diretrizes do sistema' in str(erro.value)

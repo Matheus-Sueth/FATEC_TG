@@ -29,6 +29,7 @@ class Banco:
 
     def salvar_dados(self):
         self.__banco_conectado.commit()
+        return True
 
     def validar_estrutura_banco(self):
         colunas = {'usuario':('id','nome','email','senha','foto'),

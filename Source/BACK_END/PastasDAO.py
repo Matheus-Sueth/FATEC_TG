@@ -8,17 +8,17 @@ class PastaDAO(Banco):
 
     def validar_pastas(self, pasta:Pasta):
         if not pasta.validar_caminho_imagem():
-            raise Exception('Diretório de imagens não foi encontrado')
+            raise Exception(f'Diretório de imagens({pasta.caminho_imagem}) não foi encontrado')
 
         if not pasta.validar_caminho_filme():
-            raise Exception('Diretório de filmes não foi encontrado')
+            raise Exception(f'Diretório de filmes({pasta.caminho_filme}) não foi encontrado')
         return True
 
     def verificar_pasta_imagem(self, pasta:Pasta):
-        self.cursor.execute(f'SELECT * FROM pastas WHERE imagem == {pasta.caminho_imagem}')
+        self.cursor.execute(f'SELECT * FROM pastas WHERE imagem == "{pasta.caminho_imagem}"')
         result = self.cursor.fetchall()
         if len(result) != 0:
-            raise Exception(f'Essa pasta de imagem já existe no banco de dados')
+            raise Exception('Essa pasta de imagem já existe no banco de dados')
         return True
 
     def inserir_pastas(self, pasta:Pasta, usuario:Usuario):
@@ -35,9 +35,8 @@ class PastaDAO(Banco):
         except Exception as erro:
             raise Exception(erro)
         self.cursor.execute(
-            f'INSERT INTO pastas (usuario_id,filme,imagem,banco) VALUES("{pasta.usuario_id}","{pasta.caminho_filme}","{pasta.caminho_imagem}","{pasta.caminho_banco}")')
-        self.salvar_dados()
-        return True
+            f'INSERT INTO pastas (usuario_id,filme,imagem,banco) VALUES({usuario.id},"{pasta.caminho_filme}","{pasta.caminho_imagem}","{pasta.caminho_banco}")')
+        return self.salvar_dados()
 
     def ler_pastas_usuario(self, usuario:Usuario):
         self.cursor.execute(f'SELECT * FROM pastas WHERE usuario_id == {usuario.id}')
@@ -49,28 +48,25 @@ class PastaDAO(Banco):
 
     def alterar_pastas(self, pasta_antiga:Pasta, pasta_alterada:Pasta, usuario:Usuario):
         try:
-            auxiliar = self.validar_pastas(pasta_antiga)
             auxiliar = self.validar_pastas(pasta_alterada)
         except Exception as erro:
             raise Exception(erro)
         try:
-            auxiliar = self.ler_pastas_usuario(usuario, ambiente)
+            auxiliar = self.verificar_pasta_imagem(pasta_alterada)
+        except Exception as erro:
+            raise Exception(erro)
+        try:
+            auxiliar = self.ler_pastas_usuario(usuario)
         except Exception as erro:
             raise Exception(erro)
         self.cursor.execute(
-            f"UPDATE usuario SET usuario_id = '{pasta_alterada.usuario_id}', filme = '{pasta_alterada.filme}', imagem = '{pasta_alterada.imagem}', banco = '{pasta_alterada.banco}' WHERE id = {pasta_antiga.id}")
-        self.salvar_dados()
-        return True
+            f"UPDATE usuario SET usuario_id = {pasta_alterada.usuario_id}, filme = '{pasta_alterada.filme}', imagem = '{pasta_alterada.imagem}', banco = '{pasta_alterada.banco}' WHERE id = {pasta_antiga.id}")
+        return self.salvar_dados()
 
     def deletar_pastas(self, pasta:Pasta, usuario:Usuario):
         try:
-            auxiliar = self.validar_pastas(pasta)
-        except Exception as erro:
-            raise Exception(erro)
-        try:
-            auxiliar = self.ler_pastas_usuario(usuario, ambiente)
+            auxiliar = self.ler_pastas_usuario(usuario)
         except Exception as erro:
             raise Exception(erro)
         self.cursor.execute(f'DELETE FROM pastas WHERE id = {pasta.id}')
-        self.salvar_dados()
-        return True
+        return self.salvar_dados()
