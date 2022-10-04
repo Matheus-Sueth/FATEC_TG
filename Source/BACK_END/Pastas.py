@@ -5,9 +5,9 @@ class Pasta:
     def __init__(self, id, usuario_id, filme, imagem, banco):
         self.__id = id
         self.__usuario_id = usuario_id
-        self.__caminho_filme = filme
-        self.__caminho_imagem = imagem
-        self.__caminho_banco = banco
+        self.__caminho_filme = rf'{filme}'
+        self.__caminho_imagem = rf'{imagem}'
+        self.__caminho_banco =  rf'{banco}'
 
     def __str__(self):
         return f'Diretório dos filmes = {self.__caminho_filme}\nDiretório das imagens = {self.__caminho_imagem}\nDiretório do banco = {self.__caminho_banco}'

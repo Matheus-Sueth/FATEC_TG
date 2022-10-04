@@ -6,8 +6,8 @@ class Filme:
         self.__nota = nota
         self.__genero = genero
         self.__extensao = extensao
-        self.__cam_filme = cam_filme
-        self.__cam_imagem = cam_imagem
+        self.__cam_filme = rf'{cam_filme}'
+        self.__cam_imagem = rf'{cam_imagem}'
         self.__qtd_assistido = valor
         self.__sinopse = sinopse.capitalize()
 

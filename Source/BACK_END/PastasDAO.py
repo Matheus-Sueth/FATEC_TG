@@ -60,7 +60,7 @@ class PastaDAO(Banco):
         except Exception as erro:
             raise Exception(erro)
         self.cursor.execute(
-            f"UPDATE usuario SET usuario_id = {pasta_alterada.usuario_id}, filme = '{pasta_alterada.filme}', imagem = '{pasta_alterada.imagem}', banco = '{pasta_alterada.banco}' WHERE id = {pasta_antiga.id}")
+            f"UPDATE pastas SET filme = '{pasta_alterada.caminho_filme}', imagem = '{pasta_alterada.caminho_imagem}', banco = '{pasta_alterada.caminho_banco}' WHERE usuario_id == {usuario.id}")
         return self.salvar_dados()
 
     def deletar_pastas(self, pasta:Pasta, usuario:Usuario):
@@ -68,5 +68,5 @@ class PastaDAO(Banco):
             auxiliar = self.ler_pastas_usuario(usuario)
         except Exception as erro:
             raise Exception(erro)
-        self.cursor.execute(f'DELETE FROM pastas WHERE id = {pasta.id}')
+        self.cursor.execute(f'DELETE FROM pastas WHERE usuario_id == {usuario.id}')
         return self.salvar_dados()

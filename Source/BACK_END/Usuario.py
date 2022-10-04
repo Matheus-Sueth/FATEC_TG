@@ -8,7 +8,7 @@ class Usuario:
         self.__nome = nome.strip().title()
         self.__email = email
         self.__senha = senha
-        self.__foto = foto
+        self.__foto = rf'{foto}'
 
     def __str__(self):
         return f'Olá, {self.__nome}'
