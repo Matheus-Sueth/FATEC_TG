@@ -47,7 +47,11 @@ class UsuarioDAO(Banco):
         usuario_login = [dado for dado in usuario_login[0]]
         decoded = base64.b64decode(usuario_login[3].encode('ascii'))
         usuario_login[3] = decoded.decode('ascii')
-        return Usuario(usuario_login[0],usuario_login[1],usuario_login[2],usuario_login[3],usuario_login[4])
+        usuario_encontrado = Usuario(usuario_login[0],usuario_login[1],usuario_login[2],usuario_login[3],usuario_login[4])
+        if not (usuario_encontrado == usuario):
+            raise Exception(f'Usuário ({usuario_encontrado.nome}) foi encontrado no sistema, porém a senha está incorreta')
+        else:
+            return Usuario(usuario_login[0],usuario_login[1],usuario_login[2],usuario_login[3],usuario_login[4])
 
     def alterar_dados(self, usuario_antigo: Usuario, usuario_alterado: Usuario):
         try:

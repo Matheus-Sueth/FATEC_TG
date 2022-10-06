@@ -4,28 +4,33 @@ from pytest import raises, mark, fixture
 
 @fixture
 def usuario_valido_fora_bd():
-   '''Retorna um usuário válido que não está no banco de dados para ser usado no create_user_success'''
+   '''Retorna um usuário válido que está fora do banco de dados'''
    return Usuario(0, 'Marcelo', 'marcelo@yahoo.com', '1234', r'E:/2020-02-20.jpg')
 
 @fixture
 def usuario_valido_fora_bd2():
-   '''Retorna um usuário válido que não está no banco de dados para ser usado no login_user_failure'''
+   '''Retorna um usuário válido que está fora do banco de dados'''
    return Usuario(0, 'Fanta Laranja', 'fanta.laranja@yahoo.com', 'laranjamais2l', r'E:/2020-02-20.jpg')
 
 @fixture
 def usuario_valido_fora_bd3():
-   '''Retorna um usuário válido que está no banco de dados para ser usado no update_user_failure_user_changed'''
+   '''Retorna um usuário válido que está fora do banco de dados'''
    return Usuario(0, 'Fanta Uva', 'fanta.uva@yahoo.com', 'uvamais2l', r'E:/2020-02-20.jpg')
 
 @fixture
 def usuario_valido_dentro_bd():
-   '''Retorna um usuário válido que está no banco de dados para sr usado no create_user_failure_user_existing'''
+   '''Retorna um usuário válido que está no banco de dados'''
    return Usuario(1, 'José', 'Jose@gmail.com', '1234', 'E:/2020-02-20.jpg')
 
 @fixture
 def usuario_valido_dentro_bd2():
-   '''Retorna um usuário válido que está no banco de dados para ser usado no update_user_failure_user_changed'''
+   '''Retorna um usuário válido que está no banco de dados'''
    return Usuario(6, 'Catarina', 'catarina@gmail.com', '1234', 'E:/0b8c081b7b05dcc0aad6238856ea87d2.gif')
+
+@fixture
+def usuario_valido_dentro_bd3():
+   '''Retorna um usuário válido que está no banco de dados'''
+   return Usuario(6, 'Catarina', 'catarina@gmail.com', '123456', 'E:/0b8c081b7b05dcc0aad6238856ea87d2.gif')
 
 
 @mark.user
@@ -110,7 +115,13 @@ class TestClassUsuario:
       def test_quando_programa_tenta_logar_recebe_dados_usuario_deve_retornar_usuario(self, usuario_valido_dentro_bd):
          assert type(banco_usuarios.ler_dados_usuario(usuario_valido_dentro_bd)) == Usuario
 
-      @mark.login_user_failure
+      @mark.login_user_failure_password
+      def test_quando_programa_tenta_logar_recebe_dados_usuario_deve_retornar_exception_senha(self, usuario_valido_dentro_bd3):
+         with raises(Exception) as erro:
+            banco_usuarios.ler_dados_usuario(usuario_valido_dentro_bd3)
+         assert f'Usuário ({usuario_valido_dentro_bd3.nome}) foi encontrado no sistema, porém a senha está incorreta' in str(erro.value)
+
+      @mark.login_user_failure_user
       def test_quando_programa_tenta_logar_recebe_dados_usuario_deve_retornar_exception_usuario(self, usuario_valido_fora_bd2):
          with raises(Exception) as erro:
             banco_usuarios.ler_dados_usuario(usuario_valido_fora_bd2)

@@ -146,11 +146,7 @@ def verificar_pastas(caminho: Pasta):
 root = Tk()
 banco_usuarios = UsuarioDAO('banco.db')
 if not banco_usuarios.validar_estrutura_banco():
-    mensagem = f'Contate o desenvolvedor no número (11) 96985-8000'
-    showwarning(
-        title='ATENÇÃO',
-        message=mensagem
-    )
+    mostrar_mensagem('Contate o desenvolvedor no número (11) 96985-8000','aviso')
     exit()
 banco_pastas = PastaDAO(banco_usuarios.banco)
 banco_filmes = FilmeDAO(banco_usuarios.banco)

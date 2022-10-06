@@ -220,27 +220,24 @@ class Login:
             self.entrada_senha.focus_set()
         else:
             usuario_login = Usuario(0,'Usuario',email,senha,'Images/foto.png')
-            resultado = banco_usuarios.ler_dados_usuario(usuario_login)
-            if type(resultado) != Usuario:
-                if resultado == False:
-                    mostrar_mensagem('E-mail ou senha com valores fora das diretrizes do sistema', 'aviso')
-                if resultado == None:
-                    mostrar_mensagem('Usuário não encontrado', 'aviso')
-                return ''
-            if usuario_login != resultado:
-                mostrar_mensagem('Usuário encontrado, mas a senha está incorreta', 'aviso')
-                return ''
-
-            self.usuario = resultado
-            self.indice = resultado.id
-            pasta_usuario = banco_pastas.ler_pastas_usuario(self.usuario)
-            if type(pasta_usuario) != Pasta:
-                mostrar_mensagem(f'Nenhuma pasta foi encontrada para o usuário {self.usuario.nome}. Então nós iremos procurar os diretórios de imagem e de filme', 'aviso')
+            try:
+                self.usuario = banco_usuarios.ler_dados_usuario(usuario_login)
+            except Exception as msg:
+                mostrar_mensagem(msg,'aviso')
+                return None
+            #self.indice = self.usuario.id
+            try:
+                self.pasta_usuario = banco_pastas.ler_pastas_usuario(self.usuario)
+            except Exception as msg:
+                mostrar_mensagem(msg, 'aviso')
                 self.pasta_usuario = Pasta(0,self.usuario.id,'','',banco_usuarios.banco)
-                self.pasta_usuario.caminho_filme, self.pasta_usuario.validar_caminho_imagem = criar_pastas()
-                banco_pastas.inserir_dados(self.pasta_usuario)
-            else:
-                self.pasta_usuario = pasta_usuario
+                while True:
+                    self.pasta_usuario.caminho_filme, self.pasta_usuario.validar_caminho_imagem = criar_pastas()
+                    try:
+                        banco_pastas.inserir_pastas(self.pasta_usuario, self.usuario)
+                        break
+                    except Exception as msg:
+                        mostrar_mensagem(msg,'aviso')
             self.ir_tela_inicio()
 
     def tela_login(self):

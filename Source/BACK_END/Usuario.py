@@ -16,10 +16,8 @@ class Usuario:
     def __eq__(self, other):
         if (self.__email == other.email) and (self.__senha == other.senha):
             return True
-        elif (self.__email == other.email) and (self.__senha != other.senha):
-            return False
         else:
-            return None
+            return False
 
     @property
     def id(self):
