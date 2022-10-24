@@ -1,4 +1,3 @@
-from os.path import isfile
 from pathlib import Path
 
 class Pasta:

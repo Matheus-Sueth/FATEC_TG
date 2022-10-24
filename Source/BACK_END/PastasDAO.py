@@ -46,7 +46,7 @@ class PastaDAO(Banco):
         dados = result[0]
         return Pasta(dados[0],dados[1],dados[2],dados[3],dados[4])
 
-    def alterar_pastas(self, pasta_antiga:Pasta, pasta_alterada:Pasta, usuario:Usuario):
+    def alterar_pastas(self, pasta_alterada:Pasta, usuario:Usuario):
         try:
             auxiliar = self.validar_pastas(pasta_alterada)
         except Exception as erro:
@@ -63,7 +63,7 @@ class PastaDAO(Banco):
             f"UPDATE pastas SET filme = '{pasta_alterada.caminho_filme}', imagem = '{pasta_alterada.caminho_imagem}', banco = '{pasta_alterada.caminho_banco}' WHERE usuario_id == {usuario.id}")
         return self.salvar_dados()
 
-    def deletar_pastas(self, pasta:Pasta, usuario:Usuario):
+    def deletar_pastas(self, usuario:Usuario):
         try:
             auxiliar = self.ler_pastas_usuario(usuario)
         except Exception as erro:

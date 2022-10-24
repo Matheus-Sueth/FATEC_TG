@@ -5,7 +5,6 @@ import base64
 class UsuarioDAO(Banco):
     def __init__(self, banco):
         super().__init__(banco)
-        selfbanco_conectado = self.banco
 
     def validar_dados_usuario(self,novo_usuario):
         if not novo_usuario.eh_nome_valido():

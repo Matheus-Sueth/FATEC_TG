@@ -32,7 +32,6 @@ def usuario_valido_dentro_bd3():
    '''Retorna um usuário válido que está no banco de dados'''
    return Usuario(6, 'Catarina', 'catarina@gmail.com', '123456', 'E:/0b8c081b7b05dcc0aad6238856ea87d2.gif')
 
-
 @mark.user
 class TestClassUsuario:
    @mark.data_validation
