@@ -2509,22 +2509,19 @@ class Pesquisar_Filme:
             padx=80
         )
 
-    def monitor(self, thread):
-        if thread.is_alive():
+    def monitor(self):
+        if self.auxiliar.is_alive():
             # check the thread every 100ms
-            self.master.after(500, lambda: self.monitor(thread))
+            self.master.after(500, lambda: self.monitor())
         else:
-            self.lista_filmes = thread.filmes_api
+            self.bt_pesquisar['state'] = NORMAL
+            self.voltar_botao['state'] = NORMAL
+            self.proximo_botao['state'] = NORMAL
+            self.lista_filmes = self.auxiliar.filmes_api
             if type(self.lista_filmes) == bool:
-                self.bt_pesquisar['state'] = NORMAL
-                self.voltar_botao['state'] = NORMAL
-                self.proximo_botao['state'] = NORMAL
                 mostrar_mensagem('Nenhum filme foi encontrado', 'alerta')
                 return None
             else:
-                self.bt_pesquisar['state'] = NORMAL
-                self.voltar_botao['state'] = NORMAL
-                self.proximo_botao['state'] = NORMAL
                 mostrar_mensagem(f'Foram encontrados {len(self.lista_filmes)} de acordo com a seua pesquisa')
             self.alterar_eventos()
 
@@ -2537,7 +2534,7 @@ class Pesquisar_Filme:
             return None
 
         if ano == '':
-            auxiliar = TMDB(arquivo=f'{titulo} ({ano})', pesquisa_completa=False)
+            self.auxiliar = TMDB_Consulta(arquivo=f'{titulo} ({ano})', pesquisa_completa=False)
         else:
             try:
                 ano = int(ano)
@@ -2549,18 +2546,13 @@ class Pesquisar_Filme:
                 mostrar_mensagem('O campo ano deve ser preenchido com valores maiores que 1900 e menores ou igual ao ano atual', 'alerta')
                 return None
 
-            auxiliar = TMDB(arquivo=f'{titulo} ({ano})')
-        auxiliar.start()
+            self.auxiliar = TMDB_Consulta(arquivo=f'{titulo} ({ano})')
+        self.auxiliar.daemon = True
+        self.auxiliar.start()
         self.bt_pesquisar['state'] = DISABLED
         self.voltar_botao['state'] = DISABLED
         self.proximo_botao['state'] = DISABLED
-        self.monitor(auxiliar)
-
-    def pesquisar_filme2(self):
-        thread = Thread(target=self.pesquisar_filme())
-        thread.start()
-        thread.join()
-        self.monitor(thread)
+        self.monitor()
 
     def alterar_eventos(self):
         filme: FilmeWEB = self.lista_filmes[self.id]

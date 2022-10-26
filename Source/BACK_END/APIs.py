@@ -8,7 +8,7 @@ from threading import Thread
 import re
 
 
-class TMDB(Thread):
+class TMDB_Consulta(Thread):
     API_KEY = '9ccf9fd2aaa2811eabe3d8060d4b6e9f'
     def __init__(self, arquivo, pesquisa_completa=True):
         super().__init__()
