@@ -1,4 +1,3 @@
-import sqlite3 as sql
 from Source.BACK_END.Filme import Filme
 from Source.BACK_END.Colecao import Colecao
 from Source.BACK_END.Banco import Banco
@@ -135,3 +134,12 @@ class FilmeDAO(Banco):
         filme.aumentar_assistido()
         self.cursor.execute(f'UPDATE filmes SET qtd_assistido = {filme.assistido} WHERE id = "{filme.id}" and usuario_id = {usuario.id}')
         return self.salvar_dados()
+
+    def achar_filme_recomendado(self, usuario:Usuario):
+        lista = []
+        self.cursor.execute(f'SELECT id FROM filmes WHERE usuario_id == {usuario.id} AND qtd_assistido <> 0 AND nota IN ("EXCELENTE","MUITO BOM") GROUP BY id ORDER BY qtd_assistido DESC, nota')
+        result = self.cursor.fetchall()
+        if len(result) >= 1:
+            for dados in result:
+                lista.append(dados[0])
+        return Colecao(lista, 'Ids de filmes para recomendação')
