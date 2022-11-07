@@ -98,6 +98,10 @@ class FilmeDAO(Banco):
         self.cursor.execute(f'DELETE FROM filmes WHERE id = "{filme.id}" and usuario_id = {usuario.id}')
         return self.salvar_dados()
 
+    def deletar_todos_filmes(self, usuario: Usuario):
+        self.cursor.execute(f'DELETE FROM filmes WHERE usuario_id = {usuario.id}')
+        return self.salvar_dados()
+
     def procurar_filmes(self, coluna: str, texto: str, usuario: Usuario):
         lista = []
         texto_procurado = ''

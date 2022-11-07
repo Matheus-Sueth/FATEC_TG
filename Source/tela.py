@@ -18,6 +18,8 @@ from os import startfile
 from random import randint
 import datetime
 from threading import Thread
+import base64
+from time import sleep
 
 
 def tamanho_janela(menu, win_width, win_height):
@@ -218,9 +220,9 @@ class Login:
             mostrar_mensagem('campo SENHA não foi preenchido', 'aviso')
             self.entrada_senha.focus_set()
         else:
-            usuario_login = Usuario(0,'Usuario',email,senha,'Images/foto.png')
+            self.usuario_login = Usuario(0,'Usuario',email,senha,'Images/foto.png')
             try:
-                self.usuario = banco_usuarios.ler_dados_usuario(usuario_login)
+                self.usuario = banco_usuarios.ler_dados_usuario(self.usuario_login)
             except Exception as msg:
                 mostrar_mensagem(msg,'aviso')
                 return None
@@ -281,7 +283,7 @@ class Cadastro:
             height=4,
             width=15,
             relief=RIDGE,
-            command=lambda: self.selecionar_arquivo((("jpeg files", "*.jpg"), ("gif files", "*.gif*"), ("png files", "*.png")),'Escolha sua foto de perfil'))
+            command=lambda: self.selecionar_arquivo('Escolha sua foto de perfil'))
         self.botao_2.pack(padx=10)
 
         frame_nome = Frame(self.frame, bg='#154f91')
@@ -364,10 +366,10 @@ class Cadastro:
                        border=15, command=self.cadastro)
         botao.pack(padx=10, side=LEFT)
 
-    def selecionar_arquivo(self, tipo_arquivo, title):
+    def selecionar_arquivo(self, title):
         while True:
             caminho = filedialog.askopenfilename(
-                filetypes=(("Arquivos jpg", "*.jpg"), ("Arquivos jpeg", "*.jpeg"), ("Arquivos png", "*.png")),
+                filetypes=(("Arquivos jpg", "*.jpg"), ("Arquivos jpeg", "*.jpeg"), ("Arquivos jfif", "*.jfif"), ("Arquivos png", "*.png")),
                 title=title,
                 initialdir='/')
             if caminho == '':
@@ -452,8 +454,8 @@ class Inicio:
         self.master.bind("<Button-4>", self.mouse_wheel)
         self.master.bind("<Button-5>", self.mouse_wheel)
         self.app = app
-        self.pastas = self.app.pasta_usuario
-        self.usuario = self.app.usuario
+        self.usuario = banco_usuarios.ler_dados_usuario(self.app.usuario_login)
+        self.pastas = banco_pastas.ler_pastas_usuario(self.usuario)
         self.filmes = banco_filmes.ver_filmes(self.usuario)
         self.master.title('MENU INICIAL')
         tamanho_janela(self.master, 1135, 850)
@@ -472,9 +474,15 @@ class Inicio:
         frame_foto = Frame(self.frame, bg='#154f91')
         frame_foto.pack(side=LEFT, fill="both", expand="yes",padx=10)
 
-        im = Image.open(self.usuario.foto)
-        im.thumbnail((140, 100))
-        self.photoImg = ImageTk.PhotoImage(im)
+        try:
+            im = Image.open(self.usuario.foto)
+            im.thumbnail((130, 130))
+            self.photoImg = ImageTk.PhotoImage(im)
+        except:
+            im = 'Images/naoEncontrado.png'
+            im = Image.open(rf'{Path(im).absolute()}')
+            im.thumbnail((130, 130))
+            self.photoImg = ImageTk.PhotoImage(im)
 
         self.foto_usuario = Button(
             frame_foto,
@@ -482,15 +490,15 @@ class Inicio:
             bg='#334B49',
             border=5,
             relief=RIDGE,
-            height=100,
-            width=100,
+            height=130,
+            width=130,
             command=self.logoff
         )
         self.foto_usuario.pack(anchor=NW,fill="both", expand="yes")
 
-        label_nome = Label(
+        self.label_nome_usuario = Label(
             frame_foto,
-            text=self.usuario.nome.title(),
+            text=self.usuario.nome,
             fg='white',
             font=('Arial', 16),
             bg = '#1A857F',
@@ -499,7 +507,7 @@ class Inicio:
             relief=SOLID,
             wraplength=110
         )
-        label_nome.pack(fill="both", expand="yes")
+        self.label_nome_usuario.pack(fill="both", expand="yes")
 
         self.botoes = []
         dicionario_botao = {
@@ -722,6 +730,17 @@ class Inicio:
 
     def tela_inicio(self):
         self.frame.pack()
+        try:
+            im = Image.open(self.usuario.foto)
+            im.thumbnail((130, 130))
+            self.photoImg5 = ImageTk.PhotoImage(im)
+        except:
+            im = 'Images/naoEncontrado.png'
+            im = Image.open(rf'{Path(im).absolute()}')
+            im.thumbnail((130, 130))
+            self.photoImg5 = ImageTk.PhotoImage(im)
+        self.foto_usuario.config(image=self.photoImg5, height=130, width=130)
+        self.label_nome_usuario.config(text=self.usuario.nome)
 
     def ir_tela_add_filmes(self):
         self.filmes = banco_filmes.ver_filmes(self.usuario)
@@ -770,7 +789,6 @@ class ADD_Filme:
             text='SINOPSE',
             background='#154f91',
             anchor=W,
-            justify=LEFT,
             width=60,
             fg='white',
             font=('Arial', 12))
@@ -813,7 +831,6 @@ class ADD_Filme:
             text='GENÊRO',
             background='#154f91',
             anchor=W,
-            justify=LEFT,
             width=60,
             fg='white',
             font=('Arial', 12))
@@ -854,7 +871,6 @@ class ADD_Filme:
             text='NOTA',
             background='#154f91',
             anchor=W,
-            justify=LEFT,
             width=60,
             fg='white',
             font=('Arial', 12))
@@ -914,10 +930,21 @@ class ADD_Filme:
                                        command=self.procurar_filmes)
         botao_procurar_filmes.pack(padx=10, side=LEFT)
 
-    def monitor(self, thread):
-        if thread.is_alive():
+    def monitor(self):
+        if self.auxiliar.is_alive():
             # check the thread every 100ms
-            self.after(100, lambda: self.monitor(thread))
+            self.master.after(500, lambda: self.monitor())
+        else:
+            self.lista_filmes_web = self.auxiliar.filmes_api
+
+            if type(self.lista_filmes_web) == bool:
+                mostrar_mensagem(
+                    f'O filme: {arquivo[-1]}\nNão foi encontrado na base. Procure seu filme na tela de pesquisa')
+            else:
+                self.frame.pack_forget()
+                self.page_Filmes_API = Filmes_API(master=self.master, app=self)
+                self.page_Filmes_API.tela_auxiliar()
+            return None
 
     def pegar_genero(self, indice, tarefa):
         valor = self.var_list[indice].get()
@@ -999,18 +1026,14 @@ class ADD_Filme:
         if self.caminho_filme == '':
             mostrar_mensagem('Para procurar e adicionar as informações de um filme, você deve selecionar um filme')
             return None
-        filme = TMDB(self.caminho_filme)
-        filme.start()
-        self.lista_filmes_web = filme.procurar_filme_api()
-        self.monitor(filme)
-
-        if type(self.lista_filmes_web) == bool:
-            mostrar_mensagem(f'O filme: {arquivo[-1]}\nNão foi encontrado na base. Procure seu filme na tela de pesquisa')
-        else:
-            self.frame.pack_forget()
-            self.page_Filmes_API = Filmes_API(master=self.master, app=self)
-            self.page_Filmes_API.tela_auxiliar()
-        return None
+        aux_filme = re.split(r"[/()]\s*", self.caminho_filme)
+        titulo = aux_filme[-3].strip()
+        ano = aux_filme[-2]
+        self.auxiliar = TMDB_Consulta(arquivo=f'{titulo} ({ano})', pesquisa_completa=True)
+        self.auxiliar.daemon = True
+        self.auxiliar.start()
+        self.monitor()
+        print(2)
 
     def selecionar_arquivo(self, tipo_arquivo, title):
         if title == 'Escolha uma imagem':
@@ -2306,6 +2329,7 @@ class Recomendacao_Filme:
         tamanho_janela(self.master, 1000, 900)
         self.frame = Frame(self.master, bg='#154f91')
         self.frame.pack()
+        self.lista_filmes = []
         self.id = 0
 
         frame_filme = Frame(self.frame, bg='#154f91')
@@ -2746,8 +2770,9 @@ class Menu_Usuario:
     def __init__(self, master=None, app=None):
         self.master = master
         self.app = app
-        self.pastas = self.app.app.pasta_usuario
-        self.usuario = self.app.app.usuario
+        self.pasta_usuario = self.app.pastas
+        self.usuario = self.app.usuario
+        self.caminhos = [self.usuario.foto, self.pasta_usuario.caminho_imagem, self.pasta_usuario.caminho_filme]
         self.master.title('MENU DO USUÁRIO')
         tamanho_janela(self.master, 1130, 850)
         self.frame = Frame(self.master, bg='#154f91')
@@ -2756,11 +2781,11 @@ class Menu_Usuario:
         frame_foto = Frame(self.frame, bg='#154f91')
         frame_foto.pack(side=LEFT, fill="both", expand="yes",padx=10)
 
-        im = Image.open(self.usuario.foto)
-        im.thumbnail((140, 100))
+        im = Image.open(r'Images/movies.png')
+        im.thumbnail((100, 100))
         self.photoImg = ImageTk.PhotoImage(im)
 
-        self.foto_usuario = Button(
+        self.voltar = Button(
             frame_foto,
             image=self.photoImg,
             bg='#334B49',
@@ -2770,11 +2795,11 @@ class Menu_Usuario:
             width=100,
             command=self.ir_tela_inicio
         )
-        self.foto_usuario.pack(anchor=NW,fill="both", expand="yes")
+        self.voltar.pack(anchor=NW,fill="both", expand="yes")
 
-        label_nome = Label(
+        label_voltar = Label(
             frame_foto,
-            text=self.usuario.nome.title(),
+            text='FILMES',
             fg='white',
             font=('Arial', 16),
             bg = '#1A857F',
@@ -2783,22 +2808,152 @@ class Menu_Usuario:
             relief=SOLID,
             wraplength=110
         )
-        label_nome.pack(fill="both", expand="yes")
+        label_voltar.pack(fill="both", expand="yes")
 
         self.botoes = []
+
         dicionario_botao = {
-            0: ['ADICIONAR\nFILME',self.logoff],
-            1: ['FILME\nALEATÓRIO', self.logoff],
-            2: ['RECOMENDAÇÃO\nDE FILMES', self.logoff],
-            3: ['PESQUISAR\nFILME', self.logoff],
-            4: ['ORDENAR FILMES\nA-Z', self.logoff]
+            0: ['FICAR ON-LINE',self.logoff],
+            1: ['LOGOFF', self.logoff],
+            2: ['ENTRAR NO CHAT', self.ir_tela_chat],
+            3: ['ALTERAR\nUSUÁRIO', self.alterar_pasta_usuario],
+            4: ['DELETAR\nUSUÁRIO', self.logoff]
         }
 
-        for id in range(4,-1,-1):
+        for id in range(5):
             botao = Button(frame_foto, text=dicionario_botao[id][0], bg='#154f91', fg='white',
-                       font=('Arial', 10), border=15, command=dicionario_botao[id][1], relief=RAISED)
+                       font=('Arial', 10), border=15, relief=RAISED, command=dicionario_botao[id][1])
             self.botoes.append(botao)
-            botao.pack(pady=30, side=BOTTOM, anchor=S, fill="both", expand="yes")
+            botao.pack(pady=30, anchor=S, fill="both", expand="yes")
+
+        frame_informacoes = Frame(self.frame, bg='#154f91')
+        frame_informacoes.pack(side=LEFT, fill="both", expand="yes", padx=200, pady=30)
+
+        try:
+            im = Image.open(self.usuario.foto)
+            im.thumbnail((200, 200))
+            self.photoImg2 = ImageTk.PhotoImage(im)
+        except:
+            im = 'Images/naoEncontrado.png'
+            im = Image.open(rf'{Path(im).absolute()}')
+            im.thumbnail((200, 200))
+            self.photoImg2 = ImageTk.PhotoImage(im)
+
+        self.foto_usuario = Button(
+            frame_informacoes,
+            image=self.photoImg2,
+            bg='#334B49',
+            border=5,
+            relief=RIDGE,
+            height=200,
+            width=200,
+            command=self.selecionar_arquivo
+        )
+        self.foto_usuario.pack()
+
+        frame_informacoes_2 = Frame(frame_informacoes, bg='#154f91')
+        frame_informacoes_2.pack(pady=30)
+
+        label_nome = Label(
+            frame_informacoes_2,
+            text="NOME:",
+            fg='white',
+            font=('Arial', 16),
+            bg = '#154f91',
+            width=40,
+            anchor=NW
+        )
+        label_nome.pack()
+
+        self.entry_nome = Entry(
+            frame_informacoes_2,
+            font=('Arial', 16),
+            width=40,
+            bd=2,
+            relief=GROOVE
+        )
+        self.entry_nome.pack(side=BOTTOM)
+        self.entry_nome.insert(0, self.usuario.nome)
+
+        frame_informacoes_3 = Frame(frame_informacoes, bg='#154f91')
+        frame_informacoes_3.pack(pady=30)
+
+        label_email = Label(
+            frame_informacoes_3,
+            text="EMAIL:",
+            fg='white',
+            font=('Arial', 16),
+            bg='#154f91',
+            width=40,
+            anchor=NW
+        )
+        label_email.pack()
+
+        self.entry_email = Entry(
+            frame_informacoes_3,
+            font=('Arial', 16),
+            width=40,
+            bd=2,
+            relief=GROOVE
+        )
+        self.entry_email.pack(side=BOTTOM)
+        self.entry_email.insert(0, self.usuario.email)
+
+        frame_informacoes_4 = Frame(frame_informacoes, bg='#154f91')
+        frame_informacoes_4.pack(pady=30)
+
+        label_senha = Label(
+            frame_informacoes_4,
+            text="SENHA:",
+            fg='white',
+            font=('Arial', 16),
+            bg='#154f91',
+            width=40,
+            anchor=NW
+        )
+        label_senha.pack()
+
+        self.entry_senha = Entry(
+            frame_informacoes_4,
+            font=('Arial', 16),
+            width=40,
+            bd=2,
+            relief=GROOVE,
+            show='*'
+        )
+        self.entry_senha.pack(side=BOTTOM)
+        self.entry_senha.insert(0, self.usuario.senha)
+
+        frame_informacoes_5 = Frame(frame_informacoes, bg='#154f91')
+        frame_informacoes_5.pack(pady=30)
+
+        self.btn_imagem = Button(
+            frame_informacoes_5,
+            text=f'Diretório de imagens:\n{self.pasta_usuario.caminho_imagem}',
+            bg='#334B49',
+            border=5,
+            relief=RIDGE,
+            height=50,
+            width=30,
+            fg='white',
+            font=('Arial', 10),
+            command=lambda x='Novo diretório de imagens': self.escolher_diretorio(x)
+        )
+        self.btn_imagem.pack(side=LEFT, padx=10)
+
+        self.btn_filme = Button(
+            frame_informacoes_5,
+            text=f'Diretório de filmes:\n{self.pasta_usuario.caminho_filme}',
+            bg='#334B49',
+            border=5,
+            relief=RIDGE,
+            height=50,
+            width=30,
+            fg='white',
+            font=('Arial', 10),
+            command=lambda x='Novo diretório de filmes': self.escolher_diretorio(x)
+        )
+        self.btn_filme.pack(side=LEFT, padx=10)
 
     def logoff(self):
         resposta = perguntar('AVISO','Você tem certeza que deseja fazer logoff?')
@@ -2811,13 +2966,293 @@ class Menu_Usuario:
     def tela_menu_usuario(self):
         self.frame.pack()
 
+    def ir_tela_chat(self):
+        self.frame.pack_forget()
+        self.page_Chat = Chat(master=self.master, app=self)
+        self.page_Chat.tela_chat()
+
     def ir_tela_inicio(self):
         self.frame.pack_forget()
         self.master.title('MENU INICIAL')
         tamanho_janela(self.master, 1135, 850)
-        self.app.atualiza_filmes(self.app.id,pesquise=False)
+        self.app.atualiza_filmes(self.app.id,pesquise=True)
+        self.app.usuario = self.usuario
+        self.app.pastas = self.pasta_usuario
         self.app.tela_inicio()
 
+    def escolher_diretorio(self, title):
+        diretorio = filedialog.askdirectory(
+            title=title,
+            initialdir='/'
+        )
+
+        if diretorio == '':
+            mostrar_mensagem(f'Operação cancelada', 'Diretório')
+        else:
+            mostrar_mensagem(f'Pasta = {diretorio}', 'Diretório Alterado')
+            if title == 'Novo diretório de imagens':
+                self.btn_imagem.config(text=f'Diretório de imagens:\n{diretorio}')
+                self.caminhos[1] = diretorio
+            else:
+                self.btn_filme.config(text=f'Diretório de filmes:\n{diretorio}')
+                self.caminhos[2] = diretorio
+        return None
+
+    def selecionar_arquivo(self):
+        while True:
+            caminho = filedialog.askopenfilename(
+                filetypes=(("Arquivos jpg", "*.jpg"), ("Arquivos jpeg", "*.jpeg"), ("Arquivos jfif", "*.jfif"), ("Arquivos png", "*.png")),
+                title='Selecione uma nova imagem',
+                initialdir='/')
+            if caminho == '':
+                resposta = perguntar("AVISO", "Deseja continuar")
+                if not resposta:
+                    mostrar_mensagem('Tudo bem')
+                    return None
+            else:
+                break
+        try:
+            self.caminhos[0] = caminho
+            im = Image.open(caminho)
+            im.thumbnail((200, 200))
+            self.photoImg5 = ImageTk.PhotoImage(im)
+            self.foto_usuario.configure(image=self.photoImg5, height=200, width=200)
+            self.foto_usuario.update()
+        except:
+            self.caminhos[0] = self.usuario.foto
+            mostrar_mensagem('Arquivo de imagem corrompido ou inválido', 'erro')
+
+    def alterar_pasta_usuario(self):
+        foto = self.caminhos[0]
+        nome = self.entry_nome.get()
+        email = self.entry_email.get()
+        senha = self.entry_senha.get()
+        alterar_usuario = self.usuario.foto != foto or self.usuario.nome != nome or self.usuario.email != email or self.usuario.senha != senha
+        if senha != self.usuario.senha:
+            resposta = perguntar('TROCAR A SENHA?','Você tem certeza sobre a alteração da senha?')
+            if not resposta:
+                self.entry_senha.delete(0, END)
+                self.entry_senha.insert(0, self.usuario.senha)
+                senha = self.usuario.senha
+        dir_imagem = self.caminhos[1]
+        dir_filme = self.caminhos[2]
+        alterar_pasta = dir_imagem != self.pasta_usuario.caminho_imagem or dir_filme != self.pasta_usuario.caminho_filme
+        if dir_filme != self.pasta_usuario.caminho_filme:
+            resposta = perguntar('TROCAR DIRETÓRIO', 'Você deseja alterar o diretório dos filmes?\nAviso que essa alteração irá deletar todos os filmes do banco')
+            if not resposta:
+                mostrar_mensagem('Nenhuma alteração foi feita','info')
+                return None
+
+        if not (alterar_usuario or alterar_pasta):
+            mostrar_mensagem('Nenhuma alteração foi identificada', 'erro')
+            return None
+
+        if alterar_pasta:
+            if dir_filme != self.pasta_usuario.caminho_filme:
+                banco_filmes.deletar_todos_filmes(self.usuario)
+            else:
+                pass
+            try:
+                banco_pastas.alterar_pastas(Pasta(self.pasta_usuario.id, self.usuario.id, dir_filme, dir_imagem, self.pasta_usuario.caminho_banco), self.usuario)
+            except Exception as mensagem:
+                mostrar_mensagem(mensagem,'erro')
+                return None
+            try:
+                self.pasta_usuario = banco_pastas.ler_pastas_usuario(self.usuario)
+            except Exception as msg:
+                mostrar_mensagem(msg, 'erro')
+                return None
+            verifica_caminho_filmes(self.pasta_usuario)
+            verifica_caminho_imagens(self.pasta_usuario)
+
+        if alterar_usuario:
+            try:
+                banco_usuarios.alterar_dados(self.usuario, Usuario(0, nome, email, senha, foto))
+            except Exception as mensagem:
+                mostrar_mensagem(mensagem,'erro2')
+                return None
+            try:
+                self.usuario = banco_usuarios.ler_dados_usuario(Usuario(0, nome, email, senha, foto))
+            except Exception as msg:
+                mostrar_mensagem(msg,'erro')
+                return None
+        mostrar_mensagem('Todas as alterações requisitadas foram realizadas','info')
+        return None
+
+
+class Chat:
+    def __init__(self, master=None, app=None):
+        self.master = master
+        self.app = app
+        self.id_chat = None
+        self.dentro_chat = True
+        self.usuario = self.app.usuario
+        self.criar_usuario()
+        self.mensagens_chat = []
+        self.master.title('CHAT')
+        tamanho_janela(self.master, 600, 850)
+        self.frame = Frame(self.master, bg='#154f91')
+        self.frame.pack()
+
+        frame_auxiliar = Frame(self.frame, width=600, height=850)
+        frame_auxiliar.pack()
+        self.labelHead = Label(frame_auxiliar,
+                               bg="#1A857F",
+                               fg="#EAECEE",
+                               text=f'NICKNAME: {self.usuario.nome}',
+                               font=('Arial', 13),
+                               pady=5)
+        self.labelHead.place(relwidth=1,relheight=0.075)
+        self.line = Label(frame_auxiliar,
+                          width=450,
+                          bg="#154f91")
+        self.line.place(relwidth=1,
+                        rely=0.07,
+                        relheight=0.012)
+        self.textCons = Text(frame_auxiliar,
+                             width=20,
+                             height=2,
+                             bg="#334B49",
+                             fg="#EAECEE",
+                             font=('Arial', 14),
+                             padx=5,
+                             pady=5)
+        self.textCons.place(relheight=0.745,
+                            relwidth=1,
+                            rely=0.08)
+        self.labelBottom = Label(frame_auxiliar,
+                                 bg="#154f91",
+                                 height=80)
+        self.labelBottom.place(relwidth=1,
+                               rely=0.825)
+        self.entryMsg = Entry(self.labelBottom,
+                              font=('Arial', 14))
+
+        self.entryMsg.place(relwidth=0.74,
+                            relheight=0.06,
+                            rely=0.008,
+                            relx=0.011)
+        self.entryMsg.focus()
+
+        self.buttonMsg = Button(self.labelBottom,
+                                text="Enviar",
+                                bg='#154f91',
+                                fg='white',
+                                font=('Arial', 10),
+                                border=10,
+                                relief=RAISED,
+                                width=20,
+                                command=lambda: self.enviar_mensagem(self.entryMsg.get()))
+        self.buttonMsg.place(relx=0.77,
+                             rely=0.008,
+                             relheight=0.06,
+                             relwidth=0.22)
+        self.textCons.config(cursor="arrow")
+
+        scrollbar = Scrollbar(self.textCons)
+
+        scrollbar.place(relheight=1,
+                        relx=0.974)
+        scrollbar.config(command=self.textCons.yview)
+        self.textCons.config(state=DISABLED)
+
+        self.btn_voltar = Button(
+            frame_auxiliar,
+            text=f'Voltar',
+            border=10,
+            height=5,
+            width=15,
+            fg='white',
+            bg='#154f91',
+            font=('Arial', 10),
+            relief=RAISED,
+            command=self.ir_tela_menu_usuario)
+        self.btn_voltar.place(relx=0.01,
+                             rely=0.93,
+                             relheight=0.06,
+                             relwidth=0.98)
+
+        """
+        self.btn_criar = Button(
+            self.frame,
+            text=f'Mensagem',
+            bg='#334B49',
+            border=5,
+            relief=RIDGE,
+            height=5,
+            width=15,
+            fg='white',
+            font=('Arial', 10),
+            command=self.ver_mensagem
+        )
+        self.btn_criar.pack()
+        """
+
+    def monitor_receber_mensagens(self):
+        if self.thread.is_alive():
+            self.master.after(1000, lambda: self.monitor_receber_mensagens())
+        else:
+            if len(self.mensagens_chat) != len(self.thread.mensagens):
+                self.mensagens_chat = self.thread.mensagens
+                self.carregar_mensagens()
+            if self.dentro_chat:
+                data = re.split(r"[ :.]\s*", str(datetime.datetime.now() - datetime.timedelta(seconds=5)))
+                hora = f'{data[-4]}:{data[-3]}:{data[-2]}'
+                self.thread = API_SM(user=self.usuario, funcao='receber_mensagens', hora=hora)
+                self.thread.start()
+                self.monitor_receber_mensagens()
+
+    def monitor_criar_usuario(self):
+        if self.thread.is_alive():
+            self.master.after(500, lambda: self.monitor_criar_usuario())
+        else:
+            self.id_chat = self.thread.id
+            data = re.split(r"[ :.]\s*", str(datetime.datetime.now()))
+            hora = f'{data[-4]}:{data[-3]}:{data[-2]}'
+            self.thread = API_SM(user=self.usuario, funcao='receber_mensagens', hora=hora)
+            self.thread.start()
+            self.monitor_receber_mensagens()
+
+    def criar_usuario(self):
+        self.thread = API_SM(user=self.usuario, funcao='verificar_usuario')
+        self.thread.start()
+        self.monitor_criar_usuario()
+
+    def tela_chat(self):
+        self.frame.pack()
+
+    def carregar_mensagens(self):
+        for mensagem in self.mensagens_chat:
+            self.textCons.config(state=NORMAL)
+            self.textCons.insert(END, mensagem)
+            self.textCons.config(state=DISABLED)
+            self.textCons.see(END)
+            self.entryMsg.delete(0, END)
+
+    def monitor_enviar_mensagem(self):
+        if self.thread2.is_alive():
+            self.master.after(500, lambda: self.monitor_enviar_mensagem())
+        else:
+            self.btn_voltar.config(state=NORMAL)
+            self.buttonMsg.config(state=NORMAL)
+
+    def enviar_mensagem(self, msg):
+        data = re.split(r"[ :.]\s*", str(datetime.datetime.now()))
+        hora = f'{data[-4]}:{data[-3]}:{data[-2]}'
+
+        self.thread2 = API_SM(user=self.usuario, funcao='enviar_mensagem', mensagem=msg, hora=hora)
+        self.thread2.start()
+        self.entryMsg.delete(0, END)
+        self.btn_voltar.config(state=DISABLED)
+        self.buttonMsg.config(state=DISABLED)
+        self.monitor_enviar_mensagem()
+
+    def ir_tela_menu_usuario(self):
+        self.dentro_chat = False
+        self.frame.pack_forget()
+        self.master.title('MENU DO USUÁRIO')
+        tamanho_janela(self.master, 1130, 850)
+        self.app.tela_menu_usuario()
 
 if __name__ == '__main__':
     app = SM(root)

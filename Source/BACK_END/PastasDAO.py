@@ -14,8 +14,8 @@ class PastaDAO(Banco):
             raise Exception(f'Diretório de filmes({pasta.caminho_filme}) não foi encontrado')
         return True
 
-    def verificar_pasta_imagem(self, pasta:Pasta):
-        self.cursor.execute(f'SELECT * FROM pastas WHERE imagem == "{pasta.caminho_imagem}"')
+    def verificar_pasta_imagem(self, pasta:Pasta, usuario:Usuario):
+        self.cursor.execute(f'SELECT * FROM pastas WHERE imagem == "{pasta.caminho_imagem}" and usuario_id <> {usuario.id}')
         result = self.cursor.fetchall()
         if len(result) != 0:
             raise Exception('Essa pasta de imagem já existe no banco de dados')
@@ -31,7 +31,7 @@ class PastaDAO(Banco):
         if len(result) > 0:
             raise Exception(f'O usuário {usuario.nome} já possui pastas cadastradas')
         try:
-            auxiliar = self.verificar_pasta_imagem(pasta)
+            auxiliar = self.verificar_pasta_imagem(pasta, usuario)
         except Exception as erro:
             raise Exception(erro)
         self.cursor.execute(
@@ -52,7 +52,7 @@ class PastaDAO(Banco):
         except Exception as erro:
             raise Exception(erro)
         try:
-            auxiliar = self.verificar_pasta_imagem(pasta_alterada)
+            auxiliar = self.verificar_pasta_imagem(pasta_alterada, usuario)
         except Exception as erro:
             raise Exception(erro)
         try:

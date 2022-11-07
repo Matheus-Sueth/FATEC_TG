@@ -61,14 +61,14 @@ class UsuarioDAO(Banco):
         usuario_login = self.cursor.fetchall()
         if len(usuario_login) == 0:
             raise Exception('Nenhum usuário foi encontrado no sistema')
-        self.cursor.execute(f'SELECT * FROM usuario WHERE email == "{usuario_alterado.email}"')
+        self.cursor.execute(f'SELECT * FROM usuario WHERE email == "{usuario_alterado.email}" and id <> {usuario_antigo.id}')
         usuario_login = self.cursor.fetchall()
         if len(usuario_login) > 0:
             raise Exception('E-mail já está cadastrado no sistema')
         encoded = (base64.b64encode(usuario_alterado.senha.encode('ascii')))
         usuario_alterado.senha = encoded.decode('ascii')
         self.cursor.execute(
-            f"UPDATE usuario SET nome = '{usuario_alterado.nome}', email = '{usuario_alterado.email}', senha = '{usuario_alterado.senha}', foto = '{usuario_alterado.foto}' WHERE id = {usuario_antigo.id}")
+            f"UPDATE usuario SET nome = '{usuario_alterado.nome}', email = '{usuario_alterado.email}', senha = '{usuario_alterado.senha}', foto = '{usuario_alterado.foto}' WHERE id == {usuario_antigo.id}")
         return self.salvar_dados()
 
     def deletar_dados(self, usuario: Usuario):
